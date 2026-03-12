@@ -18,7 +18,7 @@ export async function sendOpportunityApplicationEmail({
   opportunityContent: string;
   answers?: Record<string, string>;
 }) {
-  const apiKey = process.env.MAILERSEND_API_KEY;
+  const apiKey = process.env.MAILERSEND_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("MAILERSEND_API_KEY is not configured");
   }
@@ -91,7 +91,7 @@ export async function sendNewConnectionEmail({
   senderProfession?: string;
   senderLocation?: string;
 }) {
-  const apiKey = process.env.MAILERSEND_API_KEY;
+  const apiKey = process.env.MAILERSEND_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("MAILERSEND_API_KEY is not configured");
   }
