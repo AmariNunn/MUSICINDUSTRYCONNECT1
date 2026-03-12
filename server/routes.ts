@@ -224,17 +224,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (sender && recipient) {
           const senderName = `${sender.firstName} ${sender.lastName}`;
           const recipientName = `${recipient.firstName} ${recipient.lastName}`;
-          console.log(`📧 Sending connection email: ${senderName} → ${recipientName} (${recipient.email})`);
+          const recipientEmail = recipient.email.toLowerCase();
+          console.log(`📧 Sending connection email: ${senderName} → ${recipientName} (${recipientEmail})`);
           sendNewConnectionEmail({
-            recipientEmail: recipient.email,
+            recipientEmail,
             recipientName,
             senderName,
             senderProfession: sender.profession?.[0],
             senderLocation: sender.location ?? undefined,
           }).then(() => {
-            console.log(`✅ Connection email delivered to ${recipient.email}`);
+            console.log(`✅ Connection email delivered to ${recipientEmail}`);
           }).catch((err) => {
-            console.error(`❌ Connection email failed for ${recipient.email}:`, err.message);
+            console.error(`❌ Connection email failed for ${recipientEmail}:`, err?.message ?? JSON.stringify(err));
           });
         }
       } catch (emailErr) {
