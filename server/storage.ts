@@ -24,7 +24,9 @@ export interface IStorage {
 
   createConnection(connection: InsertConnection): Promise<Connection>;
   getConnectionsByUser(userId: number): Promise<Connection[]>;
+  getConnectionById(id: number): Promise<Connection | undefined>;
   updateConnectionStatus(id: number, status: string): Promise<Connection | undefined>;
+  incrementUserConnections(userId: number): Promise<void>;
 
   createFavorite(favorite: InsertFavorite): Promise<Favorite>;
   getFavoritesByUser(userId: number): Promise<Favorite[]>;
@@ -136,9 +138,20 @@ export class DatabaseStorage implements IStorage {
     );
   }
 
+  async getConnectionById(id: number): Promise<Connection | undefined> {
+    const result = await db.select().from(connections).where(eq(connections.id, id)).limit(1);
+    return result[0];
+  }
+
   async updateConnectionStatus(id: number, status: string): Promise<Connection | undefined> {
     const result = await db.update(connections).set({ status }).where(eq(connections.id, id)).returning();
     return result[0];
+  }
+
+  async incrementUserConnections(userId: number): Promise<void> {
+    await db.update(users)
+      .set({ connections: sql`${users.connections} + 1` })
+      .where(eq(users.id, userId));
   }
 
   async createFavorite(insertFavorite: InsertFavorite): Promise<Favorite> {

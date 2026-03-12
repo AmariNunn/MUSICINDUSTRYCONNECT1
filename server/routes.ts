@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertUserSchema, insertPostSchema, insertConnectionSchema, insertFavoriteSchema, insertCommentSchema } from "@shared/schema";
 import { db } from "./db";
 import { sql } from "drizzle-orm";
-import { sendOpportunityApplicationEmail } from "./mailer";
+import { sendOpportunityApplicationEmail, sendNewConnectionEmail } from "./mailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // User routes
@@ -214,9 +214,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertConnectionSchema.parse(req.body);
       const connection = await storage.createConnection(validatedData);
+
+      // Send email notification to the recipient (fire and forget)
+      try {
+        const [sender, recipient] = await Promise.all([
+          storage.getUser(validatedData.userId),
+          storage.getUser(validatedData.connectedUserId),
+        ]);
+        if (sender && recipient) {
+          sendNewConnectionEmail({
+            recipientEmail: recipient.email,
+            recipientName: `${recipient.firstName} ${recipient.lastName}`,
+            senderName: `${sender.firstName} ${sender.lastName}`,
+            senderProfession: sender.profession?.[0],
+            senderLocation: sender.location ?? undefined,
+          }).catch((err) => console.error("Connection email failed:", err));
+        }
+      } catch (emailErr) {
+        console.error("Failed to send connection email:", emailErr);
+      }
+
       res.status(201).json(connection);
     } catch (error: any) {
       res.status(400).json({ message: "Invalid connection data", error: error.message });
+    }
+  });
+
+  app.patch("/api/connections/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+
+      if (!["accepted", "rejected", "pending"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status value" });
+      }
+
+      const existing = await storage.getConnectionById(id);
+      if (!existing) {
+        return res.status(404).json({ message: "Connection not found" });
+      }
+
+      const updated = await storage.updateConnectionStatus(id, status);
+
+      // If accepted, increment connections count for both users
+      if (status === "accepted" && existing.status !== "accepted") {
+        await Promise.all([
+          storage.incrementUserConnections(existing.userId),
+          storage.incrementUserConnections(existing.connectedUserId),
+        ]);
+      }
+
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to update connection", error: error.message });
     }
   });
 
