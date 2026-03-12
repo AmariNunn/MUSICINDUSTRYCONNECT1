@@ -26,7 +26,9 @@ export interface IStorage {
   getConnectionsByUser(userId: number): Promise<Connection[]>;
   getConnectionById(id: number): Promise<Connection | undefined>;
   updateConnectionStatus(id: number, status: string): Promise<Connection | undefined>;
+  deleteConnection(userId: number, connectedUserId: number): Promise<boolean>;
   incrementUserConnections(userId: number): Promise<void>;
+  decrementUserConnections(userId: number): Promise<void>;
 
   createFavorite(favorite: InsertFavorite): Promise<Favorite>;
   getFavoritesByUser(userId: number): Promise<Favorite[]>;
@@ -148,9 +150,22 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async deleteConnection(userId: number, connectedUserId: number): Promise<boolean> {
+    const result = await db.delete(connections).where(
+      sql`(${connections.userId} = ${userId} AND ${connections.connectedUserId} = ${connectedUserId}) OR (${connections.userId} = ${connectedUserId} AND ${connections.connectedUserId} = ${userId})`
+    ).returning();
+    return result.length > 0;
+  }
+
   async incrementUserConnections(userId: number): Promise<void> {
     await db.update(users)
       .set({ connections: sql`${users.connections} + 1` })
+      .where(eq(users.id, userId));
+  }
+
+  async decrementUserConnections(userId: number): Promise<void> {
+    await db.update(users)
+      .set({ connections: sql`GREATEST(${users.connections} - 1, 0)` })
       .where(eq(users.id, userId));
   }
 

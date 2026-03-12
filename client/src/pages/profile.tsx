@@ -179,15 +179,35 @@ export default function ProfilePage() {
       return res.json();
     },
     onSuccess: () => {
-      console.log("✅ Connection request sent successfully — email notification dispatched to", currentUser?.email);
+      console.log("✅ Connected! Email notification dispatched to", currentUser?.email);
       queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/slug", userSlug] });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      toast({ title: "Connection request sent!", description: "They'll be notified by email." });
+      toast({ title: "Connected!", description: "They'll be notified by email." });
     },
     onError: (err: any) => {
-      console.error("❌ Connection request failed:", err);
-      toast({ title: "Error", description: "Failed to send connection request.", variant: "destructive" });
+      console.error("❌ Connection failed:", err);
+      toast({ title: "Error", description: "Failed to connect.", variant: "destructive" });
+    },
+  });
+
+  // Disconnect mutation
+  const disconnectMutation = useMutation({
+    mutationFn: async () => {
+      if (!loggedInUser?.id || !currentUser?.id) throw new Error("Missing user IDs");
+      const res = await apiRequest("DELETE", `/api/connections/${loggedInUser.id}/${currentUser.id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      console.log("✅ Disconnected from", currentUser?.email);
+      queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/slug", userSlug] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({ title: "Disconnected", description: "Connection removed." });
+    },
+    onError: (err: any) => {
+      console.error("❌ Disconnect failed:", err);
+      toast({ title: "Error", description: "Failed to disconnect.", variant: "destructive" });
     },
   });
 
@@ -502,32 +522,33 @@ export default function ProfilePage() {
                         <MessageCircle className="w-4 h-4 mr-2" />
                         Send Message
                       </Button>
-                      <Button
-                        className={
-                          existingConnection?.status === "accepted"
-                            ? "bg-green-500 hover:bg-green-500 text-white font-medium shadow-lg cursor-default"
-                            : existingConnection?.status === "pending"
-                            ? "bg-gray-400 hover:bg-gray-400 text-white font-medium shadow-lg cursor-default"
-                            : "bg-[#c084fc] hover:bg-[#c084fc]/90 text-white font-medium shadow-lg"
-                        }
-                        onClick={() => {
-                          if (!existingConnection && !connectMutation.isPending) {
-                            connectMutation.mutate();
-                          }
-                        }}
-                        disabled={connectMutation.isPending || !!existingConnection}
-                        data-testid="button-connect"
-                      >
-                        {connectMutation.isPending ? (
-                          <><div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />Connecting...</>
-                        ) : existingConnection?.status === "accepted" ? (
-                          <><Handshake className="w-4 h-4 mr-2" />Connected</>
-                        ) : existingConnection?.status === "pending" ? (
-                          <><UserPlus className="w-4 h-4 mr-2" />Pending</>
-                        ) : (
-                          <><UserPlus className="w-4 h-4 mr-2" />Connect</>
-                        )}
-                      </Button>
+                      {existingConnection ? (
+                        <Button
+                          className="bg-green-500 hover:bg-red-500 text-white font-medium shadow-lg transition-colors group"
+                          onClick={() => { if (!disconnectMutation.isPending) disconnectMutation.mutate(); }}
+                          disabled={disconnectMutation.isPending}
+                          data-testid="button-connected"
+                        >
+                          {disconnectMutation.isPending ? (
+                            <><div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />Removing...</>
+                          ) : (
+                            <><Handshake className="w-4 h-4 mr-2 group-hover:hidden" /><X className="w-4 h-4 mr-2 hidden group-hover:block" /><span className="group-hover:hidden">Connected</span><span className="hidden group-hover:inline">Disconnect</span></>
+                          )}
+                        </Button>
+                      ) : (
+                        <Button
+                          className="bg-[#c084fc] hover:bg-[#c084fc]/90 text-white font-medium shadow-lg"
+                          onClick={() => { if (!connectMutation.isPending) connectMutation.mutate(); }}
+                          disabled={connectMutation.isPending}
+                          data-testid="button-connect"
+                        >
+                          {connectMutation.isPending ? (
+                            <><div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />Connecting...</>
+                          ) : (
+                            <><UserPlus className="w-4 h-4 mr-2" />Connect</>
+                          )}
+                        </Button>
+                      )}
                       <Link href="/directory">
                         <Button className="bg-[#c084fc] hover:bg-[#c084fc]/90 text-white font-medium shadow-lg">
                           <ArrowLeft className="w-4 h-4 mr-2" />
