@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Industry Connect - Core</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Roboto', Arial, sans-serif; margin: 0; padding: 0; background: #f5f8fa; color: #1c2526; overflow-x: hidden; }
+        .container { max-width: 100%; margin: 0; padding: 0; background: #fff; border-radius: 0; overflow: hidden; }
+        .header { background: #6a0dad; color: #fff; padding: 10px; position: sticky; top: 0; z-index: 10; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .header img { width: 50px; vertical-align: middle; transition: transform 0.3s; }
+        .header:hover img { transform: scale(1.1); }
+        .cta-button { display: inline-block; padding: 10px 25px; background: #fff; color: #6a0dad; border: 2px solid #6a0dad; border-radius: 20px; text-decoration: none; font-weight: 700; font-size: 1.1em; transition: all 0.3s; }
+        .cta-button:hover { background: #6a0dad; color: #fff; transform: scale(1.05); }
+        .nav { padding: 10px; background: #e1e8ed; text-align: center; white-space: nowrap; overflow-x: auto; }
+        .nav a { color: #1c2526; text-decoration: none; margin: 0 10px; font-weight: 700; transition: color 0.3s; }
+        .nav a:hover { color: #6a0dad; }
+        .content { padding: 15px; }
+        .section { margin-bottom: 30px; }
+        .section-header { display: flex; align-items: center; margin-bottom: 10px; }
+        .section-icon { width: 50px; height: 50px; margin-right: 10px; }
+        .section-title { font-family: 'Montserrat', sans-serif; font-size: 1.5em; color: #6a0dad; }
+        .filters { display: flex; gap: 10px; margin-bottom: 15px; }
+        .filter-select { padding: 10px; border: 1px solid #e1e8ed; border-radius: 5px; font-size: 0.9em; }
+        .feed-card { background: #fff; border: 1px solid #e1e8ed; border-radius: 8px; margin-bottom: 15px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.3s, box-shadow 0.3s; display: flex; align-items: center; }
+        .feed-card:hover { transform: translateY(-5px); box-shadow: 0 3px 10px rgba(106,13,173,0.2); }
+        .post-icon { width: 30px; height: 30px; margin-right: 10px; }
+        .post-content { flex: 1; }
+        .post-title { font-weight: 700; margin-bottom: 5px; }
+        .post-description { font-size: 0.9em; color: #1c2526; }
+        .post-details { font-size: 0.8em; color: #6a0dad; margin-top: 5px; }
+        footer { text-align: center; padding: 10px; background: #e1e8ed; }
+        footer a { color: #1c2526; margin: 0 10px; text-decoration: none; transition: color 0.3s; }
+        footer a:hover { color: #6a0dad; }
+        @media (min-width: 601px) { /* Desktop adjustments */
+            .container { max-width: 600px; margin: 20px auto; }
+            .header img { width: 70px; }
+            .filters { justify-content: center; }
+            .feed-card { padding: 20px; }
+            .section-icon { width: 60px; height: 60px; }
+            .section-title { font-size: 1.8em; }
+            .card { margin-bottom: 20px; }
+            .header { flex-direction: row; justify-content: space-between; padding: 10px 15px; }
+            .cta-button { margin-left: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="MIC Logo 2.png" alt="MIC Logo">
+        </div>
+        <div class="nav">
+            <a href="index.html">Home</a>
+            <a href="directory.html">Discover</a>
+            <a href="core.html">Core</a>
+        </div>
+        <div class="content">
+            <div class="section">
+                <div class="section-header">
+                    <svg class="section-icon" width="50" height="50" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="100" cy="100" r="90" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <circle cx="70" cy="80" r="15" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <line x1="70" y1="95" x2="70" y2="130" stroke="#8A2BE2" stroke-width="5" />
+                        <circle cx="100" cy="70" r="15" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <line x1="100" y1="85" x2="100" y2="120" stroke="#8A2BE2" stroke-width="5" />
+                        <circle cx="130" cy="80" r="15" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <line x1="130" y1="95" x2="130" y2="130" stroke="#8A2BE2" stroke-width="5" />
+                    </svg>
+                    <h2 class="section-title">Community</h2>
+                </div>
+                <div class="filters">
+                    <select class="filter-select">
+                        <option>City</option>
+                        <option>Los Angeles</option>
+                        <option>New York</option>
+                        <option>Chicago</option>
+                    </select>
+                    <select class="filter-select">
+                        <option>Profession</option>
+                        <option>Artist</option>
+                        <option>Producer</option>
+                        <option>DJ</option>
+                    </select>
+                    <select class="filter-select">
+                        <option>Genre</option>
+                        <option>Hip-Hop</option>
+                        <option>Pop</option>
+                        <option>Rock</option>
+                    </select>
+                </div>
+                <div class="feed-card">
+                    <svg class="post-icon" width="30" height="30" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="100" cy="100" r="90" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <circle cx="100" cy="100" r="40" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                    </svg>
+                    <div class="post-content">
+                        <div class="post-title">Collaboration Needed</div>
+                        <div class="post-description">Looking for a producer in LA for a hip-hop track.</div>
+                    </div>
+                </div>
+                <div class="feed-card">
+                    <svg class="post-icon" width="30" height="30" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="100" cy="100" r="90" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <circle cx="100" cy="100" r="40" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                    </svg>
+                    <div class="post-content">
+                        <div class="post-title">New Release</div>
+                        <div class="post-description">Check out my latest single on Spotify!</div>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-header">
+                    <svg class="section-icon" width="50" height="50" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="100" cy="100" r="90" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <rect x="90" y="40" width="20" height="60" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <line x1="100" y1="100" x2="100" y2="140" stroke="#8A2BE2" stroke-width="5" />
+                    </svg>
+                    <h2 class="section-title">Opportunity</h2>
+                </div>
+                <div class="feed-card">
+                    <svg class="post-icon" width="30" height="30" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="60" y="70" width="80" height="60" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                    </svg>
+                    <div class="post-content">
+                        <div class="post-title">Singer Needed for Gig</div>
+                        <div class="post-description">Looking for a singer for a live performance.</div>
+                        <div class="post-details">Pay: $500 | Hours: 4 | Location: New York</div>
+                    </div>
+                </div>
+                <div class="feed-card">
+                    <svg class="post-icon" width="30" height="30" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M50 100 L100 70 L150 100 L100 130 Z" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                    </svg>
+                    <div class="post-content">
+                        <div class="post-title">Free Show Announcement</div>
+                        <div class="post-description">Join us for a free concert featuring local artists.</div>
+                        <div class="post-details">Location: Chicago | Date: July 20, 2025</div>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-header">
+                    <svg class="section-icon" width="50" height="50" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="100" cy="100" r="90" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <circle cx="80" cy="60" r="15" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <line x1="80" y1="75" x2="80" y2="110" stroke="#8A2BE2" stroke-width="5" />
+                        <line x1="80" y1="85" x2="60" y2="95" stroke="#8A2BE2" stroke-width="5" />
+                        <line x1="80" y1="85" x2="100" y2="95" stroke="#8A2BE2" stroke-width="5" />
+                        <rect x="50" y="95" width="60" height="40" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <line x1="50" y1="110" x2="110" y2="110" stroke="#8A2BE2" stroke-width="5" />
+                    </svg>
+                    <h2 class="section-title">Resources</h2>
+                </div>
+                <div class="feed-card">
+                    <div class="post-content">
+                        <div class="post-title">Music Production Tutorial</div>
+                        <div class="post-description">Learn the basics of music production with this step-by-step guide.</div>
+                    </div>
+                </div>
+                <div class="feed-card">
+                    <div class="post-content">
+                        <div class="post-title">Industry News Article</div>
+                        <div class="post-description">Latest trends in the music industry.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-header">
+                    <svg class="section-icon" width="50" height="50" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="100" cy="100" r="90" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <circle cx="60" cy="60" r="15" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <line x1="60" y1="75" x2="60" y2="110" stroke="#8A2BE2" stroke-width="5" />
+                        <line x1="60" y1="85" x2="80" y2="75" stroke="#8A2BE2" stroke-width="5" />
+                        <rect x="85" y="50" width="60" height="40" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <circle cx="40" cy="130" r="10" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <circle cx="60" cy="130" r="10" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                        <circle cx="80" cy="130" r="10" fill="none" stroke="#8A2BE2" stroke-width="5" />
+                    </svg>
+                    <h2 class="section-title">Education</h2>
+                </div>
+                <div class="feed-card">
+                    <div class="post-content">
+                        <div class="post-title">Beat Mastery Workshop</div>
+                        <div class="post-description">Live workshop with Alex Turner on July 20, 2025.</div>
+                    </div>
+                </div>
+                <div class="feed-card">
+                    <div class="post-content">
+                        <div class="post-title">Songwriting Class</div>
+                        <div class="post-description">Online class on songwriting techniques.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer>
+            <a href="#">Back to Top</a> | <a href="#">Join Now</a>
+        </footer>
+    </div>
+</body>
+</html>

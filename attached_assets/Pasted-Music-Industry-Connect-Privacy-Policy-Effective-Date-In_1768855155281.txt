@@ -1,0 +1,205 @@
+Music Industry Connect Privacy Policy
+Effective Date: [Insert Date]
+
+Your privacy matters to Music Industry Connect ("MIC," "we," "us," or "our"). Our mission is to support music creators, industry professionals, and organizations by providing a trusted platform for connection, collaboration, education, and opportunity. Central to that mission is transparency about the data we collect, how we use it, and with whom we share it.
+
+This Privacy Policy applies when you use Music Industry Connect’s websites, mobile applications, memberships, events, tools, content, and related services (collectively, the "Services"). It should be read together with our User Agreement, Community Guidelines, and any other policies we reference.
+
+By using our Services, you agree to the collection, use, and sharing of your personal data as described in this Privacy Policy.
+
+1. Scope and Definitions
+Members and Visitors
+Members are registered users of Music Industry Connect.
+
+Visitors are individuals who access public portions of the Services without registering.
+
+This Privacy Policy applies to both Members and Visitors, though certain features and data uses apply only to Members.
+
+Geographic Scope
+If you are located in the United States, your data is processed primarily under U.S. law. If you are located in other regions (including the EU, EEA, UK, or Switzerland), additional rights may apply under local data protection laws.
+
+2. Data We Collect
+2.1 Data You Provide Directly
+We collect personal data you choose to provide, including:
+
+Registration data: name, email address, password, general location (e.g., city/state).
+
+Profile data: professional role, music-related skills, genres, experience, education, affiliations, profile photo, bio, links, and other optional information.
+
+Payment data: billing details and payment information if you purchase a paid membership, event, or service (processed by third-party payment providers).
+
+Communications: messages, posts, comments, event participation, survey responses, and customer support requests.
+
+You are not required to provide optional profile information, but doing so may limit your ability to fully engage with opportunities and features.
+
+2.2 Data From Others
+We may receive data about you when:
+
+Other Members mention, tag, message, or invite you.
+
+Organizations, partners, or event hosts provide information related to opportunities, applications, or participation.
+
+Third-party integrations you choose to connect share data with us.
+
+2.3 Usage and Technical Data
+When you use our Services, we automatically collect:
+
+Log data (pages viewed, features used, searches, clicks, timestamps).
+
+Device and connection data (IP address, browser type, operating system, device identifiers).
+
+Approximate location derived from IP address.
+
+2.4 Cookies and Similar Technologies
+We use cookies, pixels, and similar technologies to:
+
+Authenticate users
+
+Remember preferences
+
+Analyze usage
+
+Improve performance
+
+Deliver relevant content and communications
+
+You can manage cookie preferences through your browser and, where required, through our consent tools.
+
+3. How We Use Your Data
+We use personal data to operate, improve, and personalize Music Industry Connect, including to:
+
+3.1 Provide and Operate the Services
+Create and manage accounts
+
+Enable networking, messaging, posting, events, and opportunities
+
+Authenticate access and enforce our policies
+
+3.2 Personalization and Recommendations
+Suggest connections, content, events, opportunities, or resources
+
+Highlight skills, genres, or experiences relevant to your interests
+
+3.3 Communications
+Send service-related messages (security, updates, confirmations)
+
+Send newsletters, announcements, and promotional communications (you may opt out of marketing messages)
+
+3.4 Paid Services and Transactions
+Process payments
+
+Manage subscriptions, memberships, and event registrations
+
+Provide receipts and account notices
+
+3.5 Analytics, Research, and Development
+Analyze platform usage and trends
+
+Improve existing features and develop new ones
+
+Produce aggregated, de-identified insights about the music industry and our community
+
+3.6 Artificial Intelligence and Automated Tools
+We may use automated systems, including AI-powered tools, to:
+
+Recommend content or connections
+
+Assist with moderation, safety, and fraud prevention
+
+Generate drafts, suggestions, or insights
+
+You are responsible for reviewing and approving any AI-generated content you choose to share.
+
+3.7 Safety, Security, and Legal Compliance
+Prevent fraud, abuse, and policy violations
+
+Protect the rights, safety, and integrity of MIC, our Members, and others
+
+Comply with legal obligations
+
+4. How We Share Information
+4.1 Within the Services
+Profile information and content you choose to share may be visible to other Members or the public, depending on your settings.
+
+Your posts, comments, likes, follows, and event participation may be associated with your profile.
+
+4.2 Service Providers
+We share data with trusted third-party service providers who help us operate our Services (e.g., hosting, analytics, payments, customer support). These providers are contractually required to protect your data and use it only for authorized purposes.
+
+4.3 Partners and Integrations
+If you connect your account to third-party tools or participate in partner programs, we may share limited data as needed to provide those features, subject to your consent.
+
+4.4 Legal and Safety Disclosures
+We may disclose information if we believe it is reasonably necessary to:
+
+Comply with law or legal process
+
+Enforce our agreements and policies
+
+Protect the rights, safety, or property of MIC, our Members, or others
+
+4.5 Business Transfers
+If Music Industry Connect is involved in a merger, acquisition, or sale of assets, personal data may be transferred as part of that transaction, subject to this Privacy Policy.
+
+5. Your Choices and Rights
+5.1 Access, Update, and Control
+You can:
+
+Access and edit your profile information
+
+Manage visibility and communication preferences
+
+Opt out of certain marketing communications
+
+5.2 Data Requests
+Subject to applicable law, you may request to:
+
+Access your personal data
+
+Correct inaccurate data
+
+Delete your data
+
+Restrict or object to certain processing
+
+Receive a copy of your data in a portable format
+
+Requests can be made using the contact information below.
+
+6. Data Retention
+We retain personal data as long as your account is active or as needed to provide Services. After account closure, we may retain certain data where required for legal compliance, dispute resolution, security, or fraud prevention. De-identified or aggregated data may be retained longer.
+
+7. Account Closure
+When you close your account:
+
+Your profile will no longer be publicly visible within a reasonable period.
+
+Content you shared with others (e.g., posts, messages, group content) may remain visible to those recipients.
+
+We do not control copies made by other users or third parties.
+
+8. Security
+We implement reasonable technical and organizational measures to protect your data. However, no system is completely secure, and we cannot guarantee absolute security.
+
+9. International Data Transfers
+Your data may be processed and stored in the United States or other countries. These countries may have different data protection laws than your jurisdiction. We use lawful mechanisms to protect cross-border transfers where required.
+
+10. Changes to This Privacy Policy
+We may update this Privacy Policy from time to time. Material changes will be communicated through the Services or other appropriate means. Continued use of the Services after the effective date constitutes acceptance of the updated policy.
+
+11. Contact Us
+If you have questions, concerns, or requests regarding this Privacy Policy or your personal data, contact us at:
+
+Music Industry Connect
+[Insert Contact Email]
+
+This Privacy Policy is designed to support transparency and trust within the Music Industry Connect community.
+
+
+Reply
+
+Reply All
+
+Forward
+
+Edit as new

@@ -1,0 +1,222 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Directory – Purple Mock</title>
+  <style>
+    :root {
+      --bg: linear-gradient(180deg, #faf5ff 0%, #ffffff 35%, #faf5ff 100%);
+      --bg-hero: transparent;
+      --text: rgba(41,7,50,0.95);
+      --muted: rgba(41,7,50,0.65);
+      --card: #fff;
+      --border: rgba(147,51,234,0.25);
+      --accent: hsl(271, 91%, 45%);
+      --accent-strong: hsl(271, 91%, 35%);
+      --chip-bg: #f5f3ff;
+      --chip-text: #5b21b6;
+      --shadow: 0 15px 45px -18px rgba(147,51,234,0.45);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 16px; }
+
+    /* Hero */
+    .hero { background: var(--bg-hero); border-bottom: 1px solid var(--border); }
+    .hero-card {
+      background: linear-gradient(135deg, color-mix(in oklab, var(--accent) 18%, transparent), transparent 55%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+    .eyebrow { display:inline-flex; gap:8px; align-items:center; color: var(--accent-strong); font-size: 14px; }
+    .title { font-weight: 800; letter-spacing: -0.02em; margin: 6px 0 8px; }
+    .subtitle { color: var(--muted); max-width: 720px; }
+    .stat { text-align:right; }
+    .stat .num { font-size: 32px; font-weight: 900; color: var(--accent-strong); line-height: 1; }
+    .stat .cap { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+
+    /* Filters */
+    .filters { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); background: color-mix(in oklab, var(--bg) 80%, transparent); }
+    .filter-card { background: color-mix(in oklab, var(--card) 92%, transparent); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+    .row { display:grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 900px) { .row { grid-template-columns: 5fr 3fr 3fr 1fr; } }
+    label { display:block; font-size: 12px; color: var(--muted); margin-bottom: 6px;}
+    .input, .select { width:100%; padding:10px 12px 10px 36px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+    .field { position: relative; }
+    .field .i { position:absolute; left:10px; top:50%; transform:translateY(-50%); width:18px; height:18px; color: var(--muted); }
+
+    .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .chip { padding:6px 10px; border-radius: 999px; border:1px solid var(--border); background: var(--chip-bg); color: var(--chip-text); font-size: 12px; cursor: pointer; }
+    .chip:hover { filter: saturate(1.1); }
+
+    /* Grid */
+    .results-head { display:flex; align-items:center; justify-content:space-between; margin: 22px 0 16px; color: var(--muted); }
+    .grid { display:grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 700px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--accent); }
+    .card-top { display:flex; gap:14px; align-items:center; margin-bottom: 10px; }
+    .avatar {
+      width: 56px; height: 56px; border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent) 55%, magenta));
+      display:grid; place-items:center; color:white; font-weight:800;
+    }
+    .name { margin:0; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tags { display:flex; gap:10px; flex-wrap: wrap; margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .tag .i { width: 14px; height: 14px; margin-right: 4px; }
+    .bio { margin: 10px 0 12px; color: var(--text); opacity: .8; font-size: 14px; }
+    .card-bottom { display:flex; align-items:center; justify-content:space-between; color: var(--muted); font-size: 12px; }
+    .card-bottom .i { width: 14px; height: 14px; margin-right: 6px; }
+
+    .footer-cta { text-align:center; margin: 28px 0 6px; }
+    .btn-disabled { padding: 10px 16px; border-radius: 10px; border:1px solid var(--border); background: var(--card); color: var(--muted); cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="11" cy="11" r="7"></circle>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+  </symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"></path>
+    <circle cx="12" cy="10" r="3"></circle>
+  </symbol>
+  <symbol id="i-music" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M9 18V5l12-2v13"></path>
+    <circle cx="6" cy="18" r="3"></circle>
+    <circle cx="18" cy="16" r="3"></circle>
+  </symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path>
+    <circle cx="9" cy="7" r="4"></circle>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+  </symbol>
+  <symbol id="i-briefcase" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="2" y="7" width="20" height="14" rx="2"></rect>
+    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path>
+  </symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </symbol>
+</svg>
+
+  <header class="hero">
+    <div class="wrap">
+      <div class="hero-card">
+        <div style="display:flex; gap:16px; align-items:flex-end; justify-content:space-between; flex-wrap:wrap">
+          <div>
+            <div class="eyebrow">
+              <svg class="i" style="width:16px;height:16px"><use href="#i-music"></use></svg>
+              <span>MiC · The Playlist</span>
+            </div>
+            <h1 class="title" style="font-size: clamp(24px, 4vw, 40px);">Music Industry Directory</h1>
+            <p class="subtitle">Discover and connect with vetted music industry professionals across roles, genres, and cities.</p>
+          </div>
+          <div class="stat">
+            <div class="num">9</div>
+            <div class="cap">Total Members</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="filters">
+    <div class="wrap">
+      <div class="filter-card">
+        <div class="row">
+          <div class="field">
+            <label>Search Professionals</label>
+            <svg class="i"><use href="#i-search"></use></svg>
+            <input class="input" placeholder="Name, skills, or location…" />
+          </div>
+          <div>
+            <label>Profession</label>
+            <div class="field">
+              <svg class="i"><use href="#i-briefcase"></use></svg>
+              <select class="select">
+                <option>All Professions</option>
+                <option>Artist</option>
+                <option>Producer</option>
+                <option>Engineer</option>
+                <option>Songwriter</option>
+                <option>DJ</option>
+                <option>Musician</option>
+                <option>Management</option>
+                <option>Executive</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label>Genre</label>
+            <div class="field">
+              <svg class="i"><use href="#i-music"></use></svg>
+              <select class="select">
+                <option>All Genres</option>
+                <option>Pop</option>
+                <option>Hip‑Hop / Rap</option>
+                <option>R&B / Soul</option>
+                <option>Rock</option>
+                <option>Country / Folk / Americana</option>
+                <option>Electronic / EDM / Techno</option>
+                <option>Jazz</option>
+                <option>Reggae / Dancehall</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <div class="chip" style="display:inline-flex; align-items:center; gap:8px;">
+              <svg class="i"><use href="#i-users"></use></svg> Relevance
+            </div>
+          </div>
+        </div>
+        <div class="chips">
+          <div class="chip">Los Angeles</div>
+          <div class="chip">New York</div>
+          <div class="chip">Nashville</div>
+          <div class="chip">Available Now</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <div class="results-head">
+      <div><strong>9</strong> professionals found</div>
+      <div>Showing demo layout (static)</div>
+    </div>
+
+    <section class="grid">
+      {CARDS}
+    </section>
+
+    <div class="footer-cta">
+      <button class="btn-disabled">All results loaded</button>
+    </div>
+  </main>
+</body>
+</html>

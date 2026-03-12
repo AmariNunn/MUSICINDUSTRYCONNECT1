@@ -1,0 +1,132 @@
+PROFILE SETTINGS (Public-Facing Information)
+
+This is the information that other members can view in the directory.
+
+1. Basic Profile Information
+
+Profile Photo
+Display Name / Stage Name
+Legal Name (optional/private)
+2. Professional Information
+
+Primary Industry Role (Artist, Producer, Songwriter, Manager, Engineer, DJ, etc.)
+Secondary Roles / Skills (Up to 5)
+Years of Experience
+Genres Worked In (Multi-select)
+Bio / About Me (Short and long versions)
+Resume Upload / EPK Upload
+Portfolio Links (SoundCloud, Spotify, YouTube, Website, etc.)
+Showcase Media (Videos, music samples, photos)
+Looking For:
+Collaborators
+Manager
+Engineer
+Placements
+Job roles
+Networking
+3. Contact & Social Links
+
+Email (optional to show)
+Phone (optional to show)
+Website URL
+Social Media Links:
+Instagram
+TikTok
+Facebook
+LinkedIn
+X (Twitter)
+YouTube
+Snapchat
+4. Location Information
+
+City
+State / Region
+Country
+(Optional) Willing to Travel
+(Optional) Remote/Virtual Only
+5. Professional Tags (Searchable)
+
+Keywords (Producer, Sync, Touring, Mixing, etc.)
+Availability Status (Open / Busy / Not Taking Projects)
+Hourly Rate or Price Range (optional)
+6. Profile Visibility Controls
+
+Public Profile or Members-Only
+Toggle which fields are visible to others
+Allow profile to be searchable in directory
+✅ ACCOUNT SETTINGS (Private Internal Information)
+
+This is where users control login, membership, privacy, subscription, and app behavior.
+
+1. Personal Information
+
+Full Legal Name
+Date of Birth
+Contact Email
+Phone Number
+Address (optional or for billing only)
+2. Login & Security
+
+Change Email
+Change Password
+Two-Factor Authentication (2FA)
+Login History / Active Sessions
+Connected Accounts:
+Apple
+Google
+Facebook
+Logout All Devices
+3. Membership & Billing
+
+For your Gold/Platinum tiers:
+
+Current Membership Status
+Renewal Date
+Subscription Plan Details
+Upgrade/Downgrade Plan
+Payment Methods
+Billing History / Receipts
+Cancel Membership
+4. Notification Settings
+
+Push Notifications
+Email Notifications
+SMS Notifications
+User selects alerts for:
+Messages
+Job alerts
+Event reminders
+Webinar announcements
+Social engagement
+New followers
+Community posts
+System updates
+5. Privacy & Security Controls
+
+Who Can Message Me (Everyone / Members Only / Connections Only)
+Who Can View My Profile
+Hide Online Status
+Block Users
+Muted Users
+Report a User / Feedback Tools
+Data Download Request (GDPR-compliant)
+6. App Preferences
+
+Language Selection
+Time Zone
+Autoplay Videos
+Content Filters (genre preferences)
+7. Data & Storage
+
+Cached files
+Media upload management
+Storage usage
+Downloaded resources
+8. Legal & Support
+
+Terms of Use
+Privacy Policy
+Community Guidelines
+Help Center / FAQs
+Contact Support
+Delete Account
