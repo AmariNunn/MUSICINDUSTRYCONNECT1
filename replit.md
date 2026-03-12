@@ -71,10 +71,10 @@ Preferred communication style: Simple, everyday language.
 - **Session Management**: Express sessions with in-memory store (ready for PostgreSQL session store upgrade)
 
 ### Database Status
-- ✅ DatabaseStorage class fully implemented with all CRUD operations
-- ✅ Database schema defined in shared/schema.ts with users, posts, connections, favorites tables
-- ✅ Supabase-compatible architecture using standard PostgreSQL + Drizzle ORM
-- ℹ️ Currently using MemStorage - full feature parity, non-persistent
+- ✅ DatabaseStorage class implemented using Drizzle ORM + Replit PostgreSQL
+- ✅ Database schema defined in shared/schema.ts with users, posts, connections, favorites, comments tables
+- ✅ Migrated from Supabase to Replit built-in PostgreSQL (DATABASE_URL / PG* env vars)
+- ✅ All tables created via `npm run db:push`
 
 ### How to Enable Permanent Database Storage
 
