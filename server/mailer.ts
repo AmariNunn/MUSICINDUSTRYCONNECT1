@@ -1,6 +1,6 @@
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 
-const FROM_EMAIL = "themusicindustryconnect@gmail.com";
+const FROM_EMAIL = "hello@musicindustryconnect.com";
 const FROM_NAME = "Music Industry Connect";
 
 export async function sendOpportunityApplicationEmail({
