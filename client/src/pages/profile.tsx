@@ -152,6 +152,45 @@ export default function ProfilePage() {
   const loggedInUser = loggedInUserId ? users.find(user => user.id.toString() === loggedInUserId) : undefined;
   const isOwnProfile = !userSlug || currentUser?.id === loggedInUser?.id;
 
+  // Fetch connections to check existing connection status
+  const { data: myConnections = [] } = useQuery<{ id: number; userId: number; connectedUserId: number; status: string }[]>({
+    queryKey: ["/api/connections", loggedInUser?.id],
+    queryFn: async () => {
+      if (!loggedInUser?.id) return [];
+      const res = await fetch(`/api/connections/${loggedInUser.id}`);
+      return res.json();
+    },
+    enabled: !!loggedInUser?.id && !isOwnProfile,
+  });
+
+  const existingConnection = currentUser && myConnections.find(
+    c => (c.userId === loggedInUser?.id && c.connectedUserId === currentUser.id) ||
+         (c.connectedUserId === loggedInUser?.id && c.userId === currentUser.id)
+  );
+
+  // Connect mutation
+  const connectMutation = useMutation({
+    mutationFn: async () => {
+      if (!loggedInUser?.id || !currentUser?.id) throw new Error("Missing user IDs");
+      const res = await apiRequest("POST", "/api/connections", {
+        userId: loggedInUser.id,
+        connectedUserId: currentUser.id,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      console.log("✅ Connection request sent successfully — email notification dispatched to", currentUser?.email);
+      queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/slug", userSlug] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({ title: "Connection request sent!", description: "They'll be notified by email." });
+    },
+    onError: (err: any) => {
+      console.error("❌ Connection request failed:", err);
+      toast({ title: "Error", description: "Failed to send connection request.", variant: "destructive" });
+    },
+  });
+
   // Save changes mutation - must be before any early returns
   const updateProfileMutation = useMutation({
     mutationFn: async (data: Partial<User>) => {
@@ -463,9 +502,31 @@ export default function ProfilePage() {
                         <MessageCircle className="w-4 h-4 mr-2" />
                         Send Message
                       </Button>
-                      <Button className="bg-[#c084fc] hover:bg-[#c084fc]/90 text-white font-medium shadow-lg">
-                        <UserPlus className="w-4 h-4 mr-2" />
-                        Connect
+                      <Button
+                        className={
+                          existingConnection?.status === "accepted"
+                            ? "bg-green-500 hover:bg-green-500 text-white font-medium shadow-lg cursor-default"
+                            : existingConnection?.status === "pending"
+                            ? "bg-gray-400 hover:bg-gray-400 text-white font-medium shadow-lg cursor-default"
+                            : "bg-[#c084fc] hover:bg-[#c084fc]/90 text-white font-medium shadow-lg"
+                        }
+                        onClick={() => {
+                          if (!existingConnection && !connectMutation.isPending) {
+                            connectMutation.mutate();
+                          }
+                        }}
+                        disabled={connectMutation.isPending || !!existingConnection}
+                        data-testid="button-connect"
+                      >
+                        {connectMutation.isPending ? (
+                          <><div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />Connecting...</>
+                        ) : existingConnection?.status === "accepted" ? (
+                          <><Handshake className="w-4 h-4 mr-2" />Connected</>
+                        ) : existingConnection?.status === "pending" ? (
+                          <><UserPlus className="w-4 h-4 mr-2" />Pending</>
+                        ) : (
+                          <><UserPlus className="w-4 h-4 mr-2" />Connect</>
+                        )}
                       </Button>
                       <Link href="/directory">
                         <Button className="bg-[#c084fc] hover:bg-[#c084fc]/90 text-white font-medium shadow-lg">
