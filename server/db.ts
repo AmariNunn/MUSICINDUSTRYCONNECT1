@@ -4,16 +4,18 @@ import * as schema from "@shared/schema";
 
 const { Pool } = pg;
 
-// DATABASE CONNECTION - Works with Replit PostgreSQL, Supabase, or any PostgreSQL provider
-// Build connection string from Replit PG* vars if available, otherwise use DATABASE_URL
+// DATABASE CONNECTION - Prefers SUPABASE_DATABASE_URL if set, then Replit PostgreSQL
 function getConnectionString(): string {
-  // Check for Replit-provided database first
+  // Use Supabase if configured
+  if (process.env.SUPABASE_DATABASE_URL) {
+    return process.env.SUPABASE_DATABASE_URL;
+  }
+  // Fallback to Replit built-in PostgreSQL
   if (process.env.PGHOST && process.env.PGUSER && process.env.PGPASSWORD && process.env.PGDATABASE) {
     const port = process.env.PGPORT || '5432';
     return `postgresql://${process.env.PGUSER}:${process.env.PGPASSWORD}@${process.env.PGHOST}:${port}/${process.env.PGDATABASE}`;
   }
-  // Fallback to DATABASE_URL
-  return process.env.NEW_DATABASE_URL || process.env.DATABASE_URL || '';
+  return process.env.DATABASE_URL || '';
 }
 
 const connectionString = getConnectionString();
@@ -24,5 +26,9 @@ if (!connectionString) {
   );
 }
 
-export const pool = new Pool({ connectionString });
+const isSupabase = connectionString.includes("supabase.co");
+export const pool = new Pool({
+  connectionString,
+  ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
+});
 export const db = drizzle(pool, { schema });
