@@ -1,0 +1,267 @@
+2026-03-15T22:13:50Z info: Deployment: 9e2519a0-5308-40dc-b2c0-1c87aa5d0561
+2026-03-15T22:13:50Z info: Build: 85d0436e-8274-4966-bbb0-50e02a8c3d6e
+2026-03-15T22:13:50Z info: Running Security Scan
+2026-03-15T22:14:01Z info: Security Scan Complete
+2026-03-15T22:14:02Z info: Preparing development database schema
+2026-03-15T22:14:05Z info: Successfully copied development database schema to production database
+2026-03-15T22:14:05Z info: Connecting to builder
+2026-03-15T22:14:05Z info: Builder connected
+2026-03-15T22:14:06Z info: Installing packages
+2026-03-15T22:14:06Z info: Starting Build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+
+vite v5.4.21 building for production...
+
+transforming...
+
+Browserslist: browsers data (caniuse-lite) is 17 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+✓ 1899 modules transformed.
+
+rendering chunks...
+
+computing gzip size...
+
+../dist/public/index.html                                                         0.63 kB │ gzip:   0.38 kB
+
+../dist/public/assets/MIC Logo 2_1752952044953-MIRbKERz.png                      47.01 kB
+../dist/public/assets/Admin_1762465710428-MfGA0Lok.png                           47.21 kB
+../dist/public/assets/Legal_1762466682803-DZPOHSK8.png                           53.04 kB
+../dist/public/assets/Publishing_1762465734566-6cBdwP5D.png                      54.60 kB
+../dist/public/assets/Photo_1762465734565-AmsWXuhn.png                           58.47 kB
+../dist/public/assets/Fashion_1762465691488-Bw0Ui_cC.png                         62.07 kB
+
+../dist/public/assets/Educator_1762465691488-D0HN7PnD.png                        63.36 kB
+../dist/public/assets/Producer_1762465734566-sJZXl7pr.png                        65.69 kB
+../dist/public/assets/Radio_1762465734567-4opAxzT7.png                           66.14 kB
+../dist/public/assets/Label_1762466673010-CWoO1SP2.png                           66.39 kB
+
+../dist/public/assets/Managemnt_1762466682803-Btdw1JrL.png                       66.45 kB
+../dist/public/assets/Consultant_1762465691487-CSn7n06N.png                      66.48 kB
+../dist/public/assets/Resources_1762467991075-wb3yQ-IT.png                       66.74 kB
+../dist/public/assets/Dancer_1768850130733-CB3vzMxe.png                          67.55 kB
+../dist/public/assets/Venue_1762465734568-ClgE_-fN.png                           67.76 kB
+
+../dist/public/assets/Events_1762467993706-C4o42a3S.png                          68.64 kB
+../dist/public/assets/House_1762466673009-CTiEyhi4.png                           69.44 kB
+../dist/public/assets/Jazz_1762466673009-BMCw8zZ6.png                            70.40 kB
+../dist/public/assets/Audio_1762465710429-Cj8zRPji.png                           72.51 kB
+../dist/public/assets/Pop_1762465734566-BSy7cIH3.png                             73.62 kB
+../dist/public/assets/Marketing_1762466682803-XNCJ2dLT.png                       73.72 kB
+../dist/public/assets/Artist_1762465710429-BT_AZ6OD.png                          74.66 kB
+../dist/public/assets/Studio_1762465734567-n7jNpiDJ.png                          75.92 kB
+../dist/public/assets/Opportunity_1762467984905-CzzxA-fK.png                     76.50 kB
+../dist/public/assets/Community (2)_1762467983061-CiF0qSIj.png                   76.81 kB
+../dist/public/assets/AfroBeats_1762465710428-3XG8HkUG.png                       77.29 kB
+../dist/public/assets/Executive_1768850171001-ny2Q18vb.png                       77.48 kB
+../dist/public/assets/Rock_1762465734567-BybT7lxn.png                            78.42 kB
+../dist/public/assets/RB_1762465734567-DKFlcVRX.png                              79.55 kB
+../dist/public/assets/HipHop_1762466673009-DJalnyhQ.png                          80.19 kB
+../dist/public/assets/Glam_1762465691488-IAgJ4Nqv.png                            81.79 kB
+../dist/public/assets/DJ_1762465691487-B8YoEESc.png                              82.42 kB
+../dist/public/assets/Touring_1762465734567-DWZzq1du.png                         86.10 kB
+../dist/public/assets/Reggae_1762465734567-b01lYqJd.png                          86.11 kB
+../dist/public/assets/Songwriter_1762465734567-rw0dMF-P.png                      86.39 kB
+../dist/public/assets/Musician_1762465734564-CFnkjoNc.png                        89.48 kB
+../dist/public/assets/2_1761671469190-BzDubHpV.png                               95.08 kB
+../dist/public/assets/Country_1762466727810-CeP8cYZ8.png                        100.00 kB
+../dist/public/assets/1_1761671469189-DJqsYYvk.png                              101.89 kB
+../dist/public/assets/Latin_1762466682803-BJ9GO83T.png                          105.93 kB
+../dist/public/assets/Blues_1762465691486-jLxNeRFI.png                          106.02 kB
+../dist/public/assets/Synch_1762465734567-_6dB9C8M.png                          111.65 kB
+../dist/public/assets/Gospel_1762465691488-DxyjArTW.png                         114.62 kB
+
+../dist/public/assets/Claasical_1762465691487-BdIbJIpi.png                      119.22 kB
+../dist/public/assets/3_1761671469191-CcZX1uM6.png                              131.66 kB
+../dist/public/assets/EDM_1762465691488-kFytBCYG.png                            184.30 kB
+../dist/public/assets/Platinum Level_1762468203581-BXqyQQQG.png                 241.34 kB
+../dist/public/assets/Gold_Level-removebg-preview_1762468528106-BzhDKNj0.png    274.76 kB
+../dist/public/assets/index-D7CJU1n2.css                                        109.74 kB │ gzip:  17.40 kB
+../dist/public/assets/index-laJ7TE-o.js                                       3,465.04 kB │ gzip: 547.84 kB
+
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+✓ built in 8.05s
+
+
+  dist/index.js  37.4kb
+
+⚡ Done in 8ms
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.11.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.11.1
+npm notice To update run: npm install -g npm@11.11.1
+npm notice
+
+2026-03-15T22:14:18Z info: Pushing pid1 binary layer...
+2026-03-15T22:14:19Z info: Pushing Repl layer...
+2026-03-15T22:14:19Z info: Pushing hosting layer...
+2026-03-15T22:14:20Z info: Created hosting layer
+2026-03-15T22:14:21Z info: Created pid1 binary layer
+2026-03-15T22:14:37Z info: Created Repl layer
+2026-03-15T22:14:42Z info: Creating Autoscale service
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+  ^
+
+node:internal/modules/cjs/loader:1210
+forwarding local port 5000 to external port 80 (mapped as 1104)
+metasidecar: loaded enterprise status from environment is_enterprise=false
+command finished with error [node ./dist/index.cjs]: exit status 1
+  requireStack: []
+node:internal/modules/cjs/loader:1210
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+
+    at node:internal/main/run_main_module:28:49 {
+  throw err;
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+
+  code: 'MODULE_NOT_FOUND',
+starting up user application
+}
+  ^
+  throw err;
+Error: Cannot find module '/home/runner/workspace/dist/index.cjs'
+  code: 'MODULE_NOT_FOUND',
+}
+
+Error: Cannot find module '/home/runner/workspace/dist/index.cjs'
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+Error: Cannot find module '/home/runner/workspace/dist/index.cjs'
+Node.js v20.20.0
+  requireStack: []
+
+  ^
+  ^
+    at node:internal/main/run_main_module:28:49 {
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+    at node:internal/main/run_main_module:28:49 {
+command finished with error [node ./dist/index.cjs]: exit status 1
+  ^
+  throw err;
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+  code: 'MODULE_NOT_FOUND',
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+command finished with error [node ./dist/index.cjs]: exit status 1
+  requireStack: []
+    at node:internal/main/run_main_module:28:49 {
+node:internal/modules/cjs/loader:1210
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+Error: Cannot find module '/home/runner/workspace/dist/index.cjs'
+
+  ^
+    at node:internal/main/run_main_module:28:49 {
+Node.js v20.20.0
+Node.js v20.20.0
+Node.js v20.20.0
+  throw err;
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+Node.js v20.20.0
+command finished with error [node ./dist/index.cjs]: exit status 1
+Error: Cannot find module '/home/runner/workspace/dist/index.cjs'
+
+command finished with error [node ./dist/index.cjs]: exit status 1
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+
+  ^
+  requireStack: []
+Node.js v20.20.0
+}
+node:internal/modules/cjs/loader:1210
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+  throw err;
+}
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+  throw err;
+command finished with error [node ./dist/index.cjs]: exit status 1
+command finished with error [node ./dist/index.cjs]: exit status 1
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+
+node:internal/modules/cjs/loader:1210
+
+
+    at node:internal/main/run_main_module:28:49 {
+node:internal/modules/cjs/loader:1210
+}
+
+  code: 'MODULE_NOT_FOUND',
+Error: Cannot find module '/home/runner/workspace/dist/index.cjs'
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+  throw err;
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+  requireStack: []
+Node.js v20.20.0
+Error: Cannot find module '/home/runner/workspace/dist/index.cjs'
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+node:internal/modules/cjs/loader:1210
+  requireStack: []
+  code: 'MODULE_NOT_FOUND',
+}
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+  code: 'MODULE_NOT_FOUND',
+}
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+  throw err;
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+  requireStack: []
+Error: Cannot find module '/home/runner/workspace/dist/index.cjs'
+    at node:internal/main/run_main_module:28:49 {
+node:internal/modules/cjs/loader:1210
+Node.js v20.20.0
+  code: 'MODULE_NOT_FOUND',
+command finished with error [node ./dist/index.cjs]: exit status 1
+
+  ^
+
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+}
+  ^
+  throw err;
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+Error: Cannot find module '/home/runner/workspace/dist/index.cjs'
+command finished with error [node ./dist/index.cjs]: exit status 1
+}
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+Node.js v20.20.0
+    at node:internal/main/run_main_module:28:49 {
+
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+node:internal/modules/cjs/loader:1210
+
+  throw err;
+node:internal/modules/cjs/loader:1210
+Node.js v20.20.0
+    at node:internal/main/run_main_module:28:49 {
+  requireStack: []
+
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+  code: 'MODULE_NOT_FOUND',
+Error: Cannot find module '/home/runner/workspace/dist/index.cjs'
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+}
+  ^
+command finished with error [node ./dist/index.cjs]: exit status 1
+crash loop detected
+2026-03-15T22:16:30Z error: The deployment is crash looping. This can happen if the run command fails or exits immediately after starting. Check the logs for more information.
