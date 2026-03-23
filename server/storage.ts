@@ -220,12 +220,22 @@ export class DatabaseStorage implements IStorage {
         .from(connections)
         .innerJoin(users, eq(users.id, connections.userId))
         .where(eq(connections.connectedUserId, profileUserId)),
-      db.select().from(connections).where(eq(connections.userId, profileUserId)),
+      db.select({ user: users })
+        .from(connections)
+        .innerJoin(users, eq(users.id, connections.connectedUserId))
+        .where(eq(connections.userId, profileUserId)),
     ]);
-    const outgoingIds = new Set(outgoingRows.map(c => c.connectedUserId));
     const incomingUsers = incomingRows.map(r => r.user);
-    const mutualUsers = incomingUsers.filter(u => outgoingIds.has(u.id));
-    return { connections: incomingUsers, connected: mutualUsers };
+    const outgoingUsers = outgoingRows.map(r => r.user);
+    const seen = new Set<number>();
+    const allUsers: User[] = [];
+    for (const u of [...incomingUsers, ...outgoingUsers]) {
+      if (!seen.has(u.id)) { seen.add(u.id); allUsers.push(u); }
+    }
+    const incomingIds = new Set(incomingUsers.map(u => u.id));
+    const outgoingIds = new Set(outgoingUsers.map(u => u.id));
+    const mutualUsers = allUsers.filter(u => incomingIds.has(u.id) && outgoingIds.has(u.id));
+    return { connections: allUsers, connected: mutualUsers };
   }
 
   async createFavorite(insertFavorite: InsertFavorite): Promise<Favorite> {
