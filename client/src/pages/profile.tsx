@@ -179,17 +179,10 @@ export default function ProfilePage() {
     },
     onSuccess: () => {
       console.log("✅ Connected! Email notification dispatched to", currentUser?.email);
-      const hasReverse = currentUser
-        ? myConnections.some(c => c.userId === currentUser.id && c.connectedUserId === loggedInUser?.id)
-        : false;
       if (userSlug) {
         queryClient.setQueryData<User>(["/api/users/slug", userSlug], (old) => {
           if (!old) return old;
-          return {
-            ...old,
-            connections: (old.connections ?? 0) + 1,
-            ...(hasReverse ? { following: (old.following ?? 0) + 1 } : {}),
-          };
+          return { ...old, connections: (old.connections ?? 0) + 1 };
         });
       }
       queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
@@ -212,17 +205,10 @@ export default function ProfilePage() {
     },
     onSuccess: () => {
       console.log("✅ Disconnected from", currentUser?.email);
-      const hasReverse = currentUser
-        ? myConnections.some(c => c.userId === currentUser.id && c.connectedUserId === loggedInUser?.id)
-        : false;
       if (userSlug) {
         queryClient.setQueryData<User>(["/api/users/slug", userSlug], (old) => {
           if (!old) return old;
-          return {
-            ...old,
-            connections: Math.max((old.connections ?? 1) - 1, 0),
-            ...(hasReverse ? { following: Math.max((old.following ?? 1) - 1, 0) } : {}),
-          };
+          return { ...old, connections: Math.max((old.connections ?? 1) - 1, 0) };
         });
       }
       queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
