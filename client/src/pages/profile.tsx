@@ -179,25 +179,20 @@ export default function ProfilePage() {
     },
     onSuccess: () => {
       console.log("✅ Connected! Email notification dispatched to", currentUser?.email);
-      const hasReverse = currentUser && myConnections.some(
-        c => c.userId === currentUser.id && c.connectedUserId === loggedInUser?.id
-      );
-      if (userSlug) {
-        queryClient.setQueryData(["/api/users/slug", userSlug], (old: any) => {
-          if (!old) return old;
-          const updates: any = { following: (old.following ?? 0) + 1 };
-          if (hasReverse) {
-            updates.followers = (old.followers ?? 0) + 1;
-          }
-          return { ...old, ...updates };
-        });
+      const hasReverse = currentUser
+        ? myConnections.some(c => c.userId === currentUser.id && c.connectedUserId === loggedInUser?.id)
+        : false;
+      if (userSlug && hasReverse) {
+        queryClient.setQueryData<User>(["/api/users/slug", userSlug], (old) =>
+          old ? { ...old, followers: (old.followers ?? 0) + 1 } : old
+        );
       }
       queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/slug", userSlug] });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({ title: "Connected!", description: "They'll be notified by email." });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       console.error("❌ Connection failed:", err);
       toast({ title: "Error", description: "Failed to connect.", variant: "destructive" });
     },
@@ -212,25 +207,20 @@ export default function ProfilePage() {
     },
     onSuccess: () => {
       console.log("✅ Disconnected from", currentUser?.email);
-      const hasReverse = currentUser && myConnections.some(
-        c => c.userId === currentUser.id && c.connectedUserId === loggedInUser?.id
-      );
-      if (userSlug) {
-        queryClient.setQueryData(["/api/users/slug", userSlug], (old: any) => {
-          if (!old) return old;
-          const updates: any = { following: Math.max((old.following ?? 1) - 1, 0) };
-          if (hasReverse) {
-            updates.followers = Math.max((old.followers ?? 1) - 1, 0);
-          }
-          return { ...old, ...updates };
-        });
+      const hasReverse = currentUser
+        ? myConnections.some(c => c.userId === currentUser.id && c.connectedUserId === loggedInUser?.id)
+        : false;
+      if (userSlug && hasReverse) {
+        queryClient.setQueryData<User>(["/api/users/slug", userSlug], (old) =>
+          old ? { ...old, followers: Math.max((old.followers ?? 1) - 1, 0) } : old
+        );
       }
       queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/slug", userSlug] });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({ title: "Disconnected", description: "Connection removed." });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       console.error("❌ Disconnect failed:", err);
       toast({ title: "Error", description: "Failed to disconnect.", variant: "destructive" });
     },
