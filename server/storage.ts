@@ -29,6 +29,12 @@ export interface IStorage {
   deleteConnection(userId: number, connectedUserId: number): Promise<boolean>;
   incrementUserConnections(userId: number): Promise<void>;
   decrementUserConnections(userId: number): Promise<void>;
+  incrementUserFollowing(userId: number): Promise<void>;
+  decrementUserFollowing(userId: number): Promise<void>;
+  incrementUserFollowers(userId: number): Promise<void>;
+  decrementUserFollowers(userId: number): Promise<void>;
+  getDirectionalConnection(userId: number, connectedUserId: number): Promise<Connection | undefined>;
+  deleteDirectionalConnection(userId: number, connectedUserId: number): Promise<boolean>;
 
   createFavorite(favorite: InsertFavorite): Promise<Favorite>;
   getFavoritesByUser(userId: number): Promise<Favorite[]>;
@@ -167,6 +173,44 @@ export class DatabaseStorage implements IStorage {
     await db.update(users)
       .set({ connections: sql`GREATEST(${users.connections} - 1, 0)` })
       .where(eq(users.id, userId));
+  }
+
+  async incrementUserFollowing(userId: number): Promise<void> {
+    await db.update(users)
+      .set({ following: sql`${users.following} + 1` })
+      .where(eq(users.id, userId));
+  }
+
+  async decrementUserFollowing(userId: number): Promise<void> {
+    await db.update(users)
+      .set({ following: sql`GREATEST(${users.following} - 1, 0)` })
+      .where(eq(users.id, userId));
+  }
+
+  async incrementUserFollowers(userId: number): Promise<void> {
+    await db.update(users)
+      .set({ followers: sql`${users.followers} + 1` })
+      .where(eq(users.id, userId));
+  }
+
+  async decrementUserFollowers(userId: number): Promise<void> {
+    await db.update(users)
+      .set({ followers: sql`GREATEST(${users.followers} - 1, 0)` })
+      .where(eq(users.id, userId));
+  }
+
+  async getDirectionalConnection(userId: number, connectedUserId: number): Promise<Connection | undefined> {
+    const result = await db.select().from(connections).where(
+      sql`${connections.userId} = ${userId} AND ${connections.connectedUserId} = ${connectedUserId}`
+    ).limit(1);
+    return result[0];
+  }
+
+  async deleteDirectionalConnection(userId: number, connectedUserId: number): Promise<boolean> {
+    const result = await db.delete(connections).where(
+      sql`${connections.userId} = ${userId} AND ${connections.connectedUserId} = ${connectedUserId}`
+    ).returning();
+    return result.length > 0;
   }
 
   async createFavorite(insertFavorite: InsertFavorite): Promise<Favorite> {

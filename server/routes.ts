@@ -213,14 +213,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/connections", async (req, res) => {
     try {
       const validatedData = insertConnectionSchema.parse(req.body);
-      // Create connection as accepted immediately — no pending flow
+
+      const existing = await storage.getDirectionalConnection(validatedData.userId, validatedData.connectedUserId);
+      if (existing) {
+        return res.status(409).json({ message: "Connection already exists" });
+      }
+
       const connection = await storage.createConnection({ ...validatedData, status: "accepted" } as any);
 
-      // Increment connection counts for both users right away
-      await Promise.all([
-        storage.incrementUserConnections(validatedData.userId),
-        storage.incrementUserConnections(validatedData.connectedUserId),
-      ]);
+      await storage.incrementUserFollowing(validatedData.userId);
+
+      const reverseConnection = await storage.getDirectionalConnection(
+        validatedData.connectedUserId,
+        validatedData.userId
+      );
+      if (reverseConnection) {
+        await Promise.all([
+          storage.incrementUserFollowers(validatedData.userId),
+          storage.incrementUserFollowers(validatedData.connectedUserId),
+        ]);
+      }
 
       // Send email notification to the recipient (fire and forget)
       try {
@@ -259,15 +271,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = parseInt(req.params.userId);
       const connectedUserId = parseInt(req.params.connectedUserId);
-      const deleted = await storage.deleteConnection(userId, connectedUserId);
+
+      const reverseConnection = await storage.getDirectionalConnection(connectedUserId, userId);
+
+      const deleted = await storage.deleteDirectionalConnection(userId, connectedUserId);
       if (!deleted) {
         return res.status(404).json({ message: "Connection not found" });
       }
-      // Decrement counts for both users
-      await Promise.all([
-        storage.decrementUserConnections(userId),
-        storage.decrementUserConnections(connectedUserId),
-      ]);
+
+      await storage.decrementUserFollowing(userId);
+
+      if (reverseConnection) {
+        await Promise.all([
+          storage.decrementUserFollowers(userId),
+          storage.decrementUserFollowers(connectedUserId),
+        ]);
+      }
+
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ message: "Failed to remove connection", error: error.message });

@@ -164,8 +164,7 @@ export default function ProfilePage() {
   });
 
   const existingConnection = currentUser && myConnections.find(
-    c => (c.userId === loggedInUser?.id && c.connectedUserId === currentUser.id) ||
-         (c.connectedUserId === loggedInUser?.id && c.userId === currentUser.id)
+    c => c.userId === loggedInUser?.id && c.connectedUserId === currentUser.id
   );
 
   // Connect mutation
@@ -180,12 +179,6 @@ export default function ProfilePage() {
     },
     onSuccess: () => {
       console.log("✅ Connected! Email notification dispatched to", currentUser?.email);
-      // Optimistically update the displayed count immediately
-      if (userSlug) {
-        queryClient.setQueryData(["/api/users/slug", userSlug], (old: any) =>
-          old ? { ...old, connections: (old.connections ?? 0) + 1 } : old
-        );
-      }
       queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/slug", userSlug] });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
@@ -206,12 +199,6 @@ export default function ProfilePage() {
     },
     onSuccess: () => {
       console.log("✅ Disconnected from", currentUser?.email);
-      // Optimistically update the displayed count immediately
-      if (userSlug) {
-        queryClient.setQueryData(["/api/users/slug", userSlug], (old: any) =>
-          old ? { ...old, connections: Math.max((old.connections ?? 1) - 1, 0) } : old
-        );
-      }
       queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/slug", userSlug] });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
@@ -262,7 +249,7 @@ export default function ProfilePage() {
     : `${currentUser.firstName} ${currentUser.lastName}`;
 
   const stats = [
-    { label: "Connections", value: currentUser.connections, icon: Users },
+    { label: "Connections", value: currentUser.following, icon: Users },
     { label: "Favorites", value: currentUser.favorites, icon: Heart },
     { label: "Collaborations", value: currentUser.collaborations, icon: Handshake },
     { label: "Gigs", value: currentUser.gigs, icon: Calendar },
@@ -517,11 +504,11 @@ export default function ProfilePage() {
                   <div className="flex items-center space-x-6 text-sm text-gray-600">
                     <div className="flex items-center space-x-1">
                       <Users className="w-4 h-4 text-[#c084fc]" />
-                      <span><strong className="text-gray-900">{currentUser.connections}</strong> connections</span>
+                      <span><strong className="text-gray-900">{currentUser.following}</strong> connections</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <UserIcon className="w-4 h-4 text-[#c084fc]" />
-                      <span><strong className="text-gray-900">{currentUser.connections}</strong> connected</span>
+                      <span><strong className="text-gray-900">{currentUser.followers}</strong> connected</span>
                     </div>
                   </div>
                 </div>
