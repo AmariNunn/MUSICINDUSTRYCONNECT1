@@ -179,10 +179,18 @@ export default function ProfilePage() {
     },
     onSuccess: () => {
       console.log("✅ Connected! Email notification dispatched to", currentUser?.email);
+      const hasReverse = currentUser && myConnections.some(
+        c => c.userId === currentUser.id && c.connectedUserId === loggedInUser?.id
+      );
       if (userSlug) {
-        queryClient.setQueryData(["/api/users/slug", userSlug], (old: any) =>
-          old ? { ...old, following: (old.following ?? 0) + 1 } : old
-        );
+        queryClient.setQueryData(["/api/users/slug", userSlug], (old: any) => {
+          if (!old) return old;
+          const updates: any = { following: (old.following ?? 0) + 1 };
+          if (hasReverse) {
+            updates.followers = (old.followers ?? 0) + 1;
+          }
+          return { ...old, ...updates };
+        });
       }
       queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/slug", userSlug] });
@@ -204,10 +212,18 @@ export default function ProfilePage() {
     },
     onSuccess: () => {
       console.log("✅ Disconnected from", currentUser?.email);
+      const hasReverse = currentUser && myConnections.some(
+        c => c.userId === currentUser.id && c.connectedUserId === loggedInUser?.id
+      );
       if (userSlug) {
-        queryClient.setQueryData(["/api/users/slug", userSlug], (old: any) =>
-          old ? { ...old, following: Math.max((old.following ?? 1) - 1, 0) } : old
-        );
+        queryClient.setQueryData(["/api/users/slug", userSlug], (old: any) => {
+          if (!old) return old;
+          const updates: any = { following: Math.max((old.following ?? 1) - 1, 0) };
+          if (hasReverse) {
+            updates.followers = Math.max((old.followers ?? 1) - 1, 0);
+          }
+          return { ...old, ...updates };
+        });
       }
       queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/slug", userSlug] });
