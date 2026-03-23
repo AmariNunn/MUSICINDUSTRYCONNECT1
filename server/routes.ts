@@ -221,17 +221,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const connection = await storage.createConnection(validatedData);
 
-      await storage.incrementUserFollowing(validatedData.userId);
+      await storage.incrementUserConnections(validatedData.connectedUserId);
 
       const reverseConnection = await storage.getDirectionalConnection(
         validatedData.connectedUserId,
         validatedData.userId
       );
       if (reverseConnection) {
-        await Promise.all([
-          storage.incrementUserFollowers(validatedData.userId),
-          storage.incrementUserFollowers(validatedData.connectedUserId),
-        ]);
+        await storage.incrementUserFollowing(validatedData.userId);
       }
 
       // Send email notification to the recipient (fire and forget)
@@ -279,13 +276,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Connection not found" });
       }
 
-      await storage.decrementUserFollowing(userId);
+      await storage.decrementUserConnections(connectedUserId);
 
       if (reverseConnection) {
-        await Promise.all([
-          storage.decrementUserFollowers(userId),
-          storage.decrementUserFollowers(connectedUserId),
-        ]);
+        await storage.decrementUserFollowing(userId);
       }
 
       res.json({ success: true });

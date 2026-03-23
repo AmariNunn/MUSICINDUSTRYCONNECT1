@@ -182,10 +182,15 @@ export default function ProfilePage() {
       const hasReverse = currentUser
         ? myConnections.some(c => c.userId === currentUser.id && c.connectedUserId === loggedInUser?.id)
         : false;
-      if (userSlug && hasReverse) {
-        queryClient.setQueryData<User>(["/api/users/slug", userSlug], (old) =>
-          old ? { ...old, followers: (old.followers ?? 0) + 1 } : old
-        );
+      if (userSlug) {
+        queryClient.setQueryData<User>(["/api/users/slug", userSlug], (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            connections: (old.connections ?? 0) + 1,
+            ...(hasReverse ? { following: (old.following ?? 0) + 1 } : {}),
+          };
+        });
       }
       queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/slug", userSlug] });
@@ -210,10 +215,15 @@ export default function ProfilePage() {
       const hasReverse = currentUser
         ? myConnections.some(c => c.userId === currentUser.id && c.connectedUserId === loggedInUser?.id)
         : false;
-      if (userSlug && hasReverse) {
-        queryClient.setQueryData<User>(["/api/users/slug", userSlug], (old) =>
-          old ? { ...old, followers: Math.max((old.followers ?? 1) - 1, 0) } : old
-        );
+      if (userSlug) {
+        queryClient.setQueryData<User>(["/api/users/slug", userSlug], (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            connections: Math.max((old.connections ?? 1) - 1, 0),
+            ...(hasReverse ? { following: Math.max((old.following ?? 1) - 1, 0) } : {}),
+          };
+        });
       }
       queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/slug", userSlug] });
@@ -265,7 +275,7 @@ export default function ProfilePage() {
     : `${currentUser.firstName} ${currentUser.lastName}`;
 
   const stats = [
-    { label: "Connections", value: currentUser.following, icon: Users },
+    { label: "Connections", value: currentUser.connections, icon: Users },
     { label: "Favorites", value: currentUser.favorites, icon: Heart },
     { label: "Collaborations", value: currentUser.collaborations, icon: Handshake },
     { label: "Gigs", value: currentUser.gigs, icon: Calendar },
@@ -520,11 +530,11 @@ export default function ProfilePage() {
                   <div className="flex items-center space-x-6 text-sm text-gray-600">
                     <div className="flex items-center space-x-1">
                       <Users className="w-4 h-4 text-[#c084fc]" />
-                      <span><strong className="text-gray-900">{currentUser.following}</strong> connections</span>
+                      <span><strong className="text-gray-900">{currentUser.connections}</strong> connections</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <UserIcon className="w-4 h-4 text-[#c084fc]" />
-                      <span><strong className="text-gray-900">{currentUser.followers}</strong> connected</span>
+                      <span><strong className="text-gray-900">{currentUser.following}</strong> connected</span>
                     </div>
                   </div>
                 </div>
