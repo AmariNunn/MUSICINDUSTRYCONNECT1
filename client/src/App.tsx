@@ -1,10 +1,10 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Navigation from "@/components/navigation";
-import HomePage from "@/pages/home";
 import DirectoryPage from "@/pages/directory-new";
 import JoinPage from "@/pages/join";
 import CorePage from "@/pages/core-new";
@@ -14,12 +14,21 @@ import ProfilePage from "@/pages/profile";
 import AccountSettingsPage from "@/pages/account-settings";
 import NotFound from "@/pages/not-found";
 
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [location]);
+  return null;
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
       <Route path="/login" component={LoginPage} />
       <Route>
+        <ScrollToTop />
         <div className="min-h-screen bg-black">
           <Navigation />
           <Switch>
