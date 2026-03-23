@@ -1755,7 +1755,7 @@ export default function ProfilePage() {
 
       {/* Connections / Connected list dialog */}
       <Dialog open={connectionsModalType !== null} onOpenChange={(open) => { if (!open) setConnectionsModalType(null); }}>
-        <DialogContent className="max-w-md w-full p-0 overflow-hidden">
+        <DialogContent className="max-w-md w-full p-0 overflow-hidden bg-white">
           <div className="bg-gradient-to-r from-[#c084fc] to-[#a855f7] px-6 py-4">
             <DialogTitle className="text-white text-lg font-semibold">
               {connectionsModalType === "connections" ? "Connections" : "Connected"}
@@ -1767,9 +1767,9 @@ export default function ProfilePage() {
             </DialogDescription>
           </div>
 
-          <div className="p-4 max-h-[60vh] overflow-y-auto space-y-3">
+          <div className="bg-white p-4 max-h-[60vh] overflow-y-auto space-y-2">
             {connectionUsersLoading ? (
-              <div className="flex items-center justify-center py-10 text-gray-400">
+              <div className="flex items-center justify-center py-10 text-gray-500">
                 <div className="w-6 h-6 border-2 border-[#c084fc] border-t-transparent rounded-full animate-spin mr-2" />
                 Loading…
               </div>
@@ -1795,7 +1795,7 @@ export default function ProfilePage() {
                     href={`/profile/${slug}`}
                     onClick={() => setConnectionsModalType(null)}
                     data-testid={`connection-user-${user.id}`}
-                    className="flex items-center space-x-3 p-3 rounded-xl hover:bg-[#c084fc]/10 transition-colors cursor-pointer border border-transparent hover:border-[#c084fc]/20"
+                    className="flex items-center space-x-3 p-3 rounded-xl bg-white hover:bg-purple-50 transition-colors cursor-pointer border border-gray-100 hover:border-[#c084fc]/30"
                   >
                     {user.avatar ? (
                       <img
@@ -1813,10 +1813,10 @@ export default function ProfilePage() {
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-gray-900 truncate text-sm">{name}</div>
                       {user.profession && user.profession.length > 0 && (
-                        <div className="text-xs text-[#c084fc] truncate">{user.profession.slice(0, 2).join(" · ")}</div>
+                        <div className="text-xs text-[#a855f7] font-medium truncate">{user.profession.slice(0, 2).join(" · ")}</div>
                       )}
                       {user.location && (
-                        <div className="text-xs text-gray-400 truncate flex items-center gap-1">
+                        <div className="text-xs text-gray-500 truncate flex items-center gap-1">
                           <MapPin className="w-3 h-3 inline" />
                           {user.location}
                         </div>
