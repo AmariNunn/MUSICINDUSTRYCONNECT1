@@ -547,10 +547,14 @@ export default function ProfilePage() {
                 <div className="flex flex-wrap gap-3">
                   {!isOwnProfile && (
                     <>
-                      <Button className="bg-white text-[#c084fc] hover:bg-gray-50 font-medium border border-[#c084fc]">
-                        <MessageCircle className="w-4 h-4 mr-2" />
+                      <a
+                        href={`mailto:${currentUser.email}?subject=Hello from MIC - Music Industry Connect`}
+                        data-testid="btn-send-message"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-white text-[#c084fc] hover:bg-gray-50 font-medium border border-[#c084fc] text-sm no-underline transition-colors"
+                      >
+                        <MessageCircle className="w-4 h-4" />
                         Send Message
-                      </Button>
+                      </a>
                       {existingConnection ? (
                         <Button
                           className="bg-green-500 hover:bg-red-500 text-white font-medium shadow-lg transition-colors group"
@@ -1795,18 +1799,18 @@ export default function ProfilePage() {
                     href={`/profile/${slug}`}
                     onClick={() => setConnectionsModalType(null)}
                     data-testid={`connection-user-${user.id}`}
-                    className="flex items-center space-x-3 p-3 rounded-xl bg-white hover:bg-purple-50 transition-colors cursor-pointer border border-gray-100 hover:border-[#c084fc]/30"
+                    className="no-underline flex items-center space-x-3 p-3 rounded-xl bg-white hover:bg-purple-50 transition-colors cursor-pointer border border-gray-100 hover:border-[#c084fc]/30"
                   >
-                    {user.avatar ? (
+                    {user.avatar && user.avatar.trim().length > 0 ? (
                       <img
                         src={user.avatar}
                         alt={name}
                         className="w-11 h-11 rounded-full object-cover flex-shrink-0 border-2 border-[#c084fc]/30"
                       />
                     ) : (
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#c084fc] to-[#a855f7] flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-semibold text-sm">
-                          {user.firstName?.[0]}{user.lastName?.[0]}
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#c084fc] to-[#a855f7] flex items-center justify-center flex-shrink-0 shrink-0">
+                        <span className="text-white font-bold text-sm select-none">
+                          {(user.firstName?.[0] ?? "").toUpperCase()}{(user.lastName?.[0] ?? "").toUpperCase()}
                         </span>
                       </div>
                     )}
