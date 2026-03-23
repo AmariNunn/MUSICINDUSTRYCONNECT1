@@ -200,6 +200,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Connection routes
+  app.get("/api/connections/:userId/with-users", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const data = await storage.getConnectionUsersForProfile(userId);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch connection users" });
+    }
+  });
+
   app.get("/api/connections/:userId", async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);

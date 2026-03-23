@@ -52,6 +52,7 @@ export default function ProfilePage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isEditMode, setIsEditMode] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [connectionsModalType, setConnectionsModalType] = useState<null | "connections" | "connected">(null);
   const { toast } = useToast();
 
   // Redirect to login if not logged in (for /home route without userSlug)
@@ -166,6 +167,15 @@ export default function ProfilePage() {
   const existingConnection = currentUser && myConnections.find(
     c => c.userId === loggedInUser?.id && c.connectedUserId === currentUser.id
   );
+
+  const { data: connectionUsers, isLoading: connectionUsersLoading } = useQuery<{ connections: User[], connected: User[] }>({
+    queryKey: ["/api/connections", currentUser?.id, "with-users"],
+    queryFn: async () => {
+      const res = await fetch(`/api/connections/${currentUser!.id}/with-users`);
+      return res.json();
+    },
+    enabled: !!currentUser?.id && connectionsModalType !== null,
+  });
 
   // Connect mutation
   const connectMutation = useMutation({
@@ -514,14 +524,22 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="flex items-center space-x-6 text-sm text-gray-600">
-                    <div className="flex items-center space-x-1">
+                    <button
+                      data-testid="btn-connections-count"
+                      onClick={() => setConnectionsModalType("connections")}
+                      className="flex items-center space-x-1 hover:text-[#c084fc] transition-colors cursor-pointer"
+                    >
                       <Users className="w-4 h-4 text-[#c084fc]" />
                       <span><strong className="text-gray-900">{currentUser.connections}</strong> connections</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
+                    </button>
+                    <button
+                      data-testid="btn-connected-count"
+                      onClick={() => setConnectionsModalType("connected")}
+                      className="flex items-center space-x-1 hover:text-[#c084fc] transition-colors cursor-pointer"
+                    >
                       <UserIcon className="w-4 h-4 text-[#c084fc]" />
                       <span><strong className="text-gray-900">{currentUser.following}</strong> connected</span>
-                    </div>
+                    </button>
                   </div>
                 </div>
 
@@ -680,8 +698,14 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-2 gap-4">
                   {stats.map((stat, index) => {
                     const Icon = stat.icon;
+                    const modalType = stat.label === "Connections" ? "connections" : undefined;
                     return (
-                      <div key={index} className="text-center p-3 bg-gradient-to-br from-[#c084fc]/10 via-white to-[#c084fc]/20 rounded-xl hover:from-[#c084fc]/20 hover:to-[#c084fc]/30 transition-all duration-300 transform hover:scale-110 hover:shadow-lg cursor-pointer border border-[#c084fc]/30 hover:border-[#c084fc]/50">
+                      <div
+                        key={index}
+                        data-testid={`stat-card-${stat.label.toLowerCase()}`}
+                        onClick={() => modalType && setConnectionsModalType(modalType)}
+                        className="text-center p-3 bg-gradient-to-br from-[#c084fc]/10 via-white to-[#c084fc]/20 rounded-xl hover:from-[#c084fc]/20 hover:to-[#c084fc]/30 transition-all duration-300 transform hover:scale-110 hover:shadow-lg cursor-pointer border border-[#c084fc]/30 hover:border-[#c084fc]/50"
+                      >
                         <Icon className="w-5 h-5 mx-auto mb-1 text-[#c084fc] transition-transform duration-300 hover:rotate-12" />
                         <div className="text-xl font-bold text-gray-800 transition-colors duration-300">{stat.value}</div>
                         <div className="text-xs text-[#c084fc] font-medium">{stat.label}</div>
@@ -1726,6 +1750,83 @@ export default function ProfilePage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Connections / Connected list dialog */}
+      <Dialog open={connectionsModalType !== null} onOpenChange={(open) => { if (!open) setConnectionsModalType(null); }}>
+        <DialogContent className="max-w-md w-full p-0 overflow-hidden">
+          <div className="bg-gradient-to-r from-[#c084fc] to-[#a855f7] px-6 py-4">
+            <DialogTitle className="text-white text-lg font-semibold">
+              {connectionsModalType === "connections" ? "Connections" : "Connected"}
+            </DialogTitle>
+            <DialogDescription className="text-white/80 text-sm mt-0.5">
+              {connectionsModalType === "connections"
+                ? "People who have connected to this profile"
+                : "Mutual connections — they connected back too"}
+            </DialogDescription>
+          </div>
+
+          <div className="p-4 max-h-[60vh] overflow-y-auto space-y-3">
+            {connectionUsersLoading ? (
+              <div className="flex items-center justify-center py-10 text-gray-400">
+                <div className="w-6 h-6 border-2 border-[#c084fc] border-t-transparent rounded-full animate-spin mr-2" />
+                Loading…
+              </div>
+            ) : (() => {
+              const list = connectionsModalType === "connections"
+                ? (connectionUsers?.connections ?? [])
+                : (connectionUsers?.connected ?? []);
+              if (list.length === 0) {
+                return (
+                  <div className="text-center py-10 text-gray-400 text-sm">
+                    No {connectionsModalType === "connections" ? "connections" : "mutual connections"} yet.
+                  </div>
+                );
+              }
+              return list.map((user) => {
+                const slug = user.slug ?? user.id;
+                const name = user.usePkaAsMain && user.pkaName
+                  ? user.pkaName
+                  : `${user.firstName} ${user.lastName}`;
+                return (
+                  <Link
+                    key={user.id}
+                    href={`/profile/${slug}`}
+                    onClick={() => setConnectionsModalType(null)}
+                    data-testid={`connection-user-${user.id}`}
+                    className="flex items-center space-x-3 p-3 rounded-xl hover:bg-[#c084fc]/10 transition-colors cursor-pointer border border-transparent hover:border-[#c084fc]/20"
+                  >
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={name}
+                        className="w-11 h-11 rounded-full object-cover flex-shrink-0 border-2 border-[#c084fc]/30"
+                      />
+                    ) : (
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#c084fc] to-[#a855f7] flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-semibold text-sm">
+                          {user.firstName?.[0]}{user.lastName?.[0]}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-gray-900 truncate text-sm">{name}</div>
+                      {user.profession && user.profession.length > 0 && (
+                        <div className="text-xs text-[#c084fc] truncate">{user.profession.slice(0, 2).join(" · ")}</div>
+                      )}
+                      {user.location && (
+                        <div className="text-xs text-gray-400 truncate flex items-center gap-1">
+                          <MapPin className="w-3 h-3 inline" />
+                          {user.location}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                );
+              });
+            })()}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -35,6 +35,7 @@ export interface IStorage {
   decrementUserFollowers(userId: number): Promise<void>;
   getDirectionalConnection(userId: number, connectedUserId: number): Promise<Connection | undefined>;
   deleteDirectionalConnection(userId: number, connectedUserId: number): Promise<boolean>;
+  getConnectionUsersForProfile(profileUserId: number): Promise<{ connections: User[], connected: User[] }>;
 
   createFavorite(favorite: InsertFavorite): Promise<Favorite>;
   getFavoritesByUser(userId: number): Promise<Favorite[]>;
@@ -211,6 +212,20 @@ export class DatabaseStorage implements IStorage {
       sql`${connections.userId} = ${userId} AND ${connections.connectedUserId} = ${connectedUserId}`
     ).returning();
     return result.length > 0;
+  }
+
+  async getConnectionUsersForProfile(profileUserId: number): Promise<{ connections: User[], connected: User[] }> {
+    const [incomingRows, outgoingRows] = await Promise.all([
+      db.select({ user: users })
+        .from(connections)
+        .innerJoin(users, eq(users.id, connections.userId))
+        .where(eq(connections.connectedUserId, profileUserId)),
+      db.select().from(connections).where(eq(connections.userId, profileUserId)),
+    ]);
+    const outgoingIds = new Set(outgoingRows.map(c => c.connectedUserId));
+    const incomingUsers = incomingRows.map(r => r.user);
+    const mutualUsers = incomingUsers.filter(u => outgoingIds.has(u.id));
+    return { connections: incomingUsers, connected: mutualUsers };
   }
 
   async createFavorite(insertFavorite: InsertFavorite): Promise<Favorite> {
