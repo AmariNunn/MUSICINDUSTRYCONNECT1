@@ -3,7 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertPostSchema, insertConnectionSchema, insertFavoriteSchema, insertCommentSchema } from "@shared/schema";
 import { db } from "./db";
-import { sql } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
+import { users } from "@shared/schema";
 import { sendOpportunityApplicationEmail, sendNewConnectionEmail } from "./mailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -199,6 +200,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Recalculate denormalized counters from actual connection data
+  app.post("/api/admin/recalc-counters", async (req, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      await Promise.all(allUsers.map(async (user) => {
+        const { connections: allConns, connected: mutualConns } = await storage.getConnectionUsersForProfile(user.id);
+        await db.update(users)
+          .set({ connections: allConns.length, following: mutualConns.length })
+          .where(eq(users.id, user.id));
+      }));
+      res.json({ success: true, updated: allUsers.length });
+    } catch (error: any) {
+      res.status(500).json({ message: "Recalc failed", error: error.message });
+    }
+  });
+
   // Connection routes
   app.get("/api/connections/:userId/with-users", async (req, res) => {
     try {
@@ -238,7 +255,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validatedData.userId
       );
       if (reverseConnection) {
-        await storage.incrementUserFollowing(validatedData.userId);
+        await Promise.all([
+          storage.incrementUserFollowing(validatedData.userId),
+          storage.incrementUserFollowing(validatedData.connectedUserId),
+        ]);
       }
 
       // Send email notification to the recipient (fire and forget)
@@ -289,7 +309,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.decrementUserConnections(connectedUserId);
 
       if (reverseConnection) {
-        await storage.decrementUserFollowing(userId);
+        await Promise.all([
+          storage.decrementUserFollowing(userId),
+          storage.decrementUserFollowing(connectedUserId),
+        ]);
       }
 
       res.json({ success: true });
