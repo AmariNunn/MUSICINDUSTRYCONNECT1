@@ -517,11 +517,11 @@ export default function ProfilePage() {
                   <div className="flex items-center space-x-6 text-sm text-gray-600">
                     <div className="flex items-center space-x-1">
                       <Users className="w-4 h-4 text-[#c084fc]" />
-                      <span><strong className="text-gray-900">{currentUser.followers}</strong> connections</span>
+                      <span><strong className="text-gray-900">{currentUser.connections}</strong> connections</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <UserIcon className="w-4 h-4 text-[#c084fc]" />
-                      <span><strong className="text-gray-900">{currentUser.following}</strong> connected</span>
+                      <span><strong className="text-gray-900">{currentUser.connections}</strong> connected</span>
                     </div>
                   </div>
                 </div>
