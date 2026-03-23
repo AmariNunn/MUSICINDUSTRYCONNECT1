@@ -179,6 +179,11 @@ export default function ProfilePage() {
     },
     onSuccess: () => {
       console.log("✅ Connected! Email notification dispatched to", currentUser?.email);
+      if (userSlug) {
+        queryClient.setQueryData(["/api/users/slug", userSlug], (old: any) =>
+          old ? { ...old, following: (old.following ?? 0) + 1 } : old
+        );
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/slug", userSlug] });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
@@ -199,6 +204,11 @@ export default function ProfilePage() {
     },
     onSuccess: () => {
       console.log("✅ Disconnected from", currentUser?.email);
+      if (userSlug) {
+        queryClient.setQueryData(["/api/users/slug", userSlug], (old: any) =>
+          old ? { ...old, following: Math.max((old.following ?? 1) - 1, 0) } : old
+        );
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/connections", loggedInUser?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/slug", userSlug] });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
