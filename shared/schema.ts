@@ -78,7 +78,7 @@ export const connections = pgTable("connections", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
   connectedUserId: integer("connected_user_id").notNull().references(() => users.id),
-  status: text("status").notNull().default("pending"), // pending, accepted, rejected
+  status: text("status").notNull().default("accepted"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

@@ -219,7 +219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({ message: "Connection already exists" });
       }
 
-      const connection = await storage.createConnection({ ...validatedData, status: "accepted" } as any);
+      const connection = await storage.createConnection(validatedData);
 
       await storage.incrementUserFollowing(validatedData.userId);
 
