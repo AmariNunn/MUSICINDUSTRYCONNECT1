@@ -414,7 +414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id SERIAL PRIMARY KEY,
           user_id INTEGER NOT NULL REFERENCES users(id),
           connected_user_id INTEGER NOT NULL REFERENCES users(id),
-          status TEXT NOT NULL DEFAULT 'pending',
+          status TEXT NOT NULL DEFAULT 'accepted',
           created_at TIMESTAMP NOT NULL DEFAULT NOW()
         )
       `);
