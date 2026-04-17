@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, insertConnectionSchema, insertFavoriteSchema, insertCommentSchema, insertGalleryPostSchema, insertGalleryItemSchema } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, insertConnectionSchema, insertFavoriteSchema, insertCommentSchema } from "@shared/schema";
 import { z } from "zod";
 import { db } from "./db";
 import { sql, eq } from "drizzle-orm";
@@ -9,7 +9,14 @@ import { users } from "@shared/schema";
 import { sendOpportunityApplicationEmail, sendNewConnectionEmail } from "./mailer";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { getObjectStorageClient } from "./object-storage";
+import {
+  getObjectStorageClient,
+  GALLERY_KEY_PREFIX,
+  GALLERY_URL_PREFIX,
+  isGalleryKey,
+  galleryUrlToKey,
+  deleteGalleryObject,
+} from "./object-storage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // User routes
@@ -435,7 +442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!actingId) {
           return res.status(401).json({ message: "Not authenticated" });
         }
-        const file = (req as any).file as Express.Multer.File | undefined;
+        const file = req.file;
         if (!file) return res.status(400).json({ message: "No file uploaded" });
 
         const isImage = file.mimetype.startsWith("image/");
@@ -450,12 +457,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .json({ message: `${isVideo ? "Video" : "Image"} exceeds ${isVideo ? "50MB" : "10MB"} limit` });
         }
 
-        const ext = (file.originalname.split(".").pop() ?? "").replace(/[^A-Za-z0-9]/g, "").slice(0, 8);
-        const key = `gallery/${actingId}/${randomUUID()}${ext ? "." + ext : ""}`;
+        const ext = (file.originalname.split(".").pop() ?? "")
+          .replace(/[^A-Za-z0-9]/g, "")
+          .slice(0, 8);
+        const key = `${GALLERY_KEY_PREFIX}${actingId}/${randomUUID()}${ext ? "." + ext : ""}`;
         const client = getObjectStorageClient();
-        const result = await client.uploadFromBytes(key, file.buffer, {
-          compress: false,
-        } as any);
+        const result = await client.uploadFromBytes(key, file.buffer, { compress: false });
         if (!result.ok) {
           return res
             .status(502)
@@ -474,11 +481,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
-  // Stream stored media back to the browser.
+  // Stream stored media back to the browser. Restricted to the gallery
+  // namespace so it cannot be used to read unrelated objects in a
+  // shared bucket.
   app.get(/^\/api\/gallery\/media\/(.+)$/, async (req, res) => {
     try {
-      const key = (req.params as any)[0] as string;
-      if (!key || !/^[A-Za-z0-9_\-./]+$/.test(key)) {
+      const params = req.params as unknown as Record<string, string>;
+      const key = params[0];
+      if (!key || !isGalleryKey(key)) {
         return res.status(400).send("Invalid key");
       }
       const client = getObjectStorageClient();
@@ -486,7 +496,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!result.ok) {
         return res.status(404).send("Not found");
       }
-      const bytes = (result.value as any)[0] ?? result.value;
+      const value = result.value as unknown;
+      const bytes: Buffer = Buffer.isBuffer(value)
+        ? value
+        : Array.isArray(value) && Buffer.isBuffer((value as Buffer[])[0])
+          ? (value as Buffer[])[0]
+          : Buffer.from(value as Uint8Array);
       const ext = key.split(".").pop()?.toLowerCase() ?? "";
       const contentType =
         ext === "mp4" ? "video/mp4" :
@@ -544,8 +559,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existing = await storage.getGalleryPostById(postId);
       if (!existing) return res.status(404).json({ message: "Post not found" });
       if (existing.userId !== actingId) return res.status(403).json({ message: "Not authorized" });
+
+      // Collect media keys before deleting DB rows so we can clean up
+      // object storage. This is best-effort: a missing blob shouldn't
+      // block the delete from succeeding.
+      const fullPost = await storage.getGalleryPostsByUser(actingId);
+      const target = fullPost.find((p) => p.id === postId);
+      const keys =
+        target?.items
+          .map((it) => galleryUrlToKey(it.mediaUrl))
+          .filter((k): k is string => k !== null) ?? [];
+
       const deleted = await storage.deleteGalleryPost(postId);
       if (!deleted) return res.status(500).json({ message: "Failed to delete post" });
+
+      await Promise.all(keys.map((k) => deleteGalleryObject(k)));
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ message: "Failed to delete gallery post", error: error.message });
