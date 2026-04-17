@@ -519,7 +519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "application/octet-stream";
       res.setHeader("Content-Type", contentType);
       res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-      res.send(Buffer.from(bytes as any));
+      res.send(bytes);
     } catch (error: any) {
       res.status(500).send("Failed to fetch media");
     }
