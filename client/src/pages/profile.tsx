@@ -45,6 +45,7 @@ import type { User } from "@shared/schema";
 import { getGenreBadge, getProfessionBadge } from "@/lib/badges";
 import goldBadge from "@assets/Gold_Level-removebg-preview_1762468528106.png";
 import platinumBadge from "@assets/Platinum Level_1762468203581.png";
+import { ProfileGallery } from "@/components/profile-gallery";
 
 export default function ProfilePage() {
   const { userSlug } = useParams();
@@ -1004,6 +1005,11 @@ export default function ProfilePage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Gallery Section */}
+          <div className="lg:col-span-4 mt-6">
+            <ProfileGallery profileUserId={currentUser.id} isOwner={isOwnProfile} />
           </div>
 
           {/* Hidden Tabs for Future Use */}

@@ -97,6 +97,21 @@ export const comments = pgTable("comments", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const galleryPosts = pgTable("gallery_posts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  caption: text("caption").notNull().default(""),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const galleryItems = pgTable("gallery_items", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => galleryPosts.id),
+  mediaUrl: text("media_url").notNull(),
+  mediaType: text("media_type").notNull(),
+  orderIndex: integer("order_index").notNull().default(0),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -145,6 +160,15 @@ export const insertCommentSchema = createInsertSchema(comments).omit({
   createdAt: true,
 });
 
+export const insertGalleryPostSchema = createInsertSchema(galleryPosts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertGalleryItemSchema = createInsertSchema(galleryItems).omit({
+  id: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPost = z.infer<typeof insertPostSchema>;
@@ -155,3 +179,8 @@ export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
 export type Favorite = typeof favorites.$inferSelect;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type Comment = typeof comments.$inferSelect;
+export type InsertGalleryPost = z.infer<typeof insertGalleryPostSchema>;
+export type GalleryPost = typeof galleryPosts.$inferSelect;
+export type InsertGalleryItem = z.infer<typeof insertGalleryItemSchema>;
+export type GalleryItem = typeof galleryItems.$inferSelect;
+export type GalleryPostWithItems = GalleryPost & { items: GalleryItem[] };

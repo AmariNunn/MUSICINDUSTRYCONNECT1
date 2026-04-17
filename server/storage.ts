@@ -2,9 +2,12 @@ import { eq, or, ilike, sql } from "drizzle-orm";
 import { db } from "./db";
 import {
   users, posts, connections, favorites, comments,
+  galleryPosts, galleryItems,
   type User, type InsertUser, type Post, type InsertPost,
   type Connection, type InsertConnection, type Favorite,
-  type InsertFavorite, type Comment, type InsertComment
+  type InsertFavorite, type Comment, type InsertComment,
+  type GalleryPost, type InsertGalleryPost, type GalleryItem,
+  type InsertGalleryItem, type GalleryPostWithItems
 } from "@shared/schema";
 
 export interface IStorage {
@@ -45,6 +48,11 @@ export interface IStorage {
   createComment(comment: InsertComment): Promise<Comment>;
   getCommentsByPost(postId: number): Promise<(Comment & { author: User })[]>;
   deleteComment(id: number): Promise<boolean>;
+
+  createGalleryPost(post: InsertGalleryPost, items: Omit<InsertGalleryItem, "postId">[]): Promise<GalleryPostWithItems>;
+  getGalleryPostsByUser(userId: number): Promise<GalleryPostWithItems[]>;
+  getGalleryPostById(id: number): Promise<GalleryPost | undefined>;
+  deleteGalleryPost(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -288,6 +296,55 @@ export class DatabaseStorage implements IStorage {
 
   async deleteComment(id: number): Promise<boolean> {
     const result = await db.delete(comments).where(eq(comments.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async createGalleryPost(
+    post: InsertGalleryPost,
+    items: Omit<InsertGalleryItem, "postId">[],
+  ): Promise<GalleryPostWithItems> {
+    const [created] = await db.insert(galleryPosts).values(post).returning();
+    const itemRows = items.length
+      ? await db
+          .insert(galleryItems)
+          .values(items.map((item) => ({ ...item, postId: created.id })))
+          .returning()
+      : [];
+    return { ...created, items: itemRows.sort((a, b) => a.orderIndex - b.orderIndex) };
+  }
+
+  async getGalleryPostsByUser(userId: number): Promise<GalleryPostWithItems[]> {
+    const postsRows = await db
+      .select()
+      .from(galleryPosts)
+      .where(eq(galleryPosts.userId, userId))
+      .orderBy(sql`${galleryPosts.createdAt} DESC`);
+    if (postsRows.length === 0) return [];
+    const ids = postsRows.map((p) => p.id);
+    const itemsRows = await db
+      .select()
+      .from(galleryItems)
+      .where(sql`${galleryItems.postId} = ANY(${ids})`);
+    const byPost = new Map<number, GalleryItem[]>();
+    for (const item of itemsRows) {
+      const list = byPost.get(item.postId) ?? [];
+      list.push(item);
+      byPost.set(item.postId, list);
+    }
+    return postsRows.map((p) => ({
+      ...p,
+      items: (byPost.get(p.id) ?? []).sort((a, b) => a.orderIndex - b.orderIndex),
+    }));
+  }
+
+  async getGalleryPostById(id: number): Promise<GalleryPost | undefined> {
+    const result = await db.select().from(galleryPosts).where(eq(galleryPosts.id, id)).limit(1);
+    return result[0];
+  }
+
+  async deleteGalleryPost(id: number): Promise<boolean> {
+    await db.delete(galleryItems).where(eq(galleryItems.postId, id));
+    const result = await db.delete(galleryPosts).where(eq(galleryPosts.id, id)).returning();
     return result.length > 0;
   }
 }

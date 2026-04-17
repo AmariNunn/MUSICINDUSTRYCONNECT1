@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, insertConnectionSchema, insertFavoriteSchema, insertCommentSchema } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, insertConnectionSchema, insertFavoriteSchema, insertCommentSchema, insertGalleryPostSchema, insertGalleryItemSchema } from "@shared/schema";
+import { z } from "zod";
 import { db } from "./db";
 import { sql, eq } from "drizzle-orm";
 import { users } from "@shared/schema";
@@ -364,6 +365,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ isFavorite });
     } catch (error) {
       res.status(500).json({ message: "Failed to check favorite status" });
+    }
+  });
+
+  // Gallery routes
+  const MAX_ITEMS_PER_POST = 10;
+  const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
+  const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // 50MB
+
+  const galleryItemInputSchema = z.object({
+    mediaUrl: z.string().min(1),
+    mediaType: z.enum(["image", "video"]),
+    orderIndex: z.number().int().min(0),
+  });
+
+  const createGalleryPostSchema = z.object({
+    userId: z.number().int().positive(),
+    caption: z.string().max(2000).default(""),
+    items: z.array(galleryItemInputSchema).min(1).max(MAX_ITEMS_PER_POST),
+  });
+
+  function approxBytesFromDataUrl(url: string): number {
+    const idx = url.indexOf(",");
+    if (idx < 0) return url.length;
+    const b64 = url.slice(idx + 1);
+    return Math.floor((b64.length * 3) / 4);
+  }
+
+  app.get("/api/gallery/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const posts = await storage.getGalleryPostsByUser(userId);
+      res.json(posts);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to fetch gallery", error: error.message });
+    }
+  });
+
+  app.post("/api/gallery", async (req, res) => {
+    try {
+      const data = createGalleryPostSchema.parse(req.body);
+
+      // Validate ownership: confirm user exists
+      const owner = await storage.getUser(data.userId);
+      if (!owner) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Validate per-item size limits when sent as data URLs
+      for (const item of data.items) {
+        if (item.mediaUrl.startsWith("data:")) {
+          const size = approxBytesFromDataUrl(item.mediaUrl);
+          const limit = item.mediaType === "video" ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+          if (size > limit) {
+            return res.status(413).json({
+              message: `${item.mediaType === "video" ? "Video" : "Image"} exceeds ${
+                item.mediaType === "video" ? "50MB" : "10MB"
+              } limit`,
+            });
+          }
+        }
+      }
+
+      const post = await storage.createGalleryPost(
+        { userId: data.userId, caption: data.caption },
+        data.items.map((item) => ({
+          mediaUrl: item.mediaUrl,
+          mediaType: item.mediaType,
+          orderIndex: item.orderIndex,
+        })),
+      );
+      res.status(201).json(post);
+    } catch (error: any) {
+      if (error?.name === "ZodError") {
+        return res.status(400).json({ message: "Invalid gallery data", error: error.message });
+      }
+      res.status(500).json({ message: "Failed to create gallery post", error: error.message });
+    }
+  });
+
+  app.delete("/api/gallery/:postId", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.postId);
+      const userId = parseInt(String(req.query.userId ?? ""));
+      if (!userId) return res.status(400).json({ message: "userId is required" });
+      const existing = await storage.getGalleryPostById(postId);
+      if (!existing) return res.status(404).json({ message: "Post not found" });
+      if (existing.userId !== userId) return res.status(403).json({ message: "Not authorized" });
+      const deleted = await storage.deleteGalleryPost(postId);
+      if (!deleted) return res.status(500).json({ message: "Failed to delete post" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to delete gallery post", error: error.message });
     }
   });
 
