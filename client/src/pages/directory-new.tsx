@@ -31,7 +31,7 @@ export default function DirectoryPage() {
     queryKey: ["/api/users"],
   });
 
-  const { data: favoritesData = [] } = useQuery<Favorite[]>({
+  const { data: favoritesData = [], isLoading: favoritesLoading } = useQuery<Favorite[]>({
     queryKey: ["/api/favorites", currentUserId],
     queryFn: async () => {
       if (!currentUserId) return [];
@@ -40,7 +40,10 @@ export default function DirectoryPage() {
       return res.json();
     },
     enabled: !!currentUserId,
+    staleTime: 30_000,
   });
+
+  const favoritesReady = !currentUserId || !favoritesLoading;
 
   const favoritedIds = useMemo(
     () => new Set(favoritesData.map((f) => f.favoriteUserId)),
@@ -238,24 +241,26 @@ export default function DirectoryPage() {
                 </div>
               </div>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                data-testid={`button-favorite-${user.id}`}
-                disabled={pendingFavoriteId === user.id}
-                className={`w-10 h-10 rounded-full border-2 shadow-lg transition-all duration-300 hover:scale-110 disabled:opacity-60 disabled:cursor-not-allowed ${
-                  isFav
-                    ? "bg-gradient-to-br from-yellow-400 to-yellow-500 border-yellow-400 text-white hover:from-yellow-500 hover:to-yellow-600 shadow-yellow-500/30"
-                    : "border-purple-300 text-purple-400 hover:border-yellow-400 hover:text-yellow-500 bg-white/70 backdrop-blur-sm hover:bg-yellow-50"
-                }`}
-                onClick={(e) => toggleFavorite(e, user.id)}
-              >
-                {pendingFavoriteId === user.id ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Heart className={`w-5 h-5 ${isFav ? "fill-current" : ""}`} />
-                )}
-              </Button>
+              {currentUserId && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  data-testid={`button-favorite-${user.id}`}
+                  disabled={pendingFavoriteId === user.id || !favoritesReady}
+                  className={`w-10 h-10 rounded-full border-2 shadow-lg transition-all duration-300 hover:scale-110 disabled:opacity-60 disabled:cursor-not-allowed ${
+                    isFav
+                      ? "bg-gradient-to-br from-yellow-400 to-yellow-500 border-yellow-400 text-white hover:from-yellow-500 hover:to-yellow-600 shadow-yellow-500/30"
+                      : "border-purple-300 text-purple-400 hover:border-yellow-400 hover:text-yellow-500 bg-white/70 backdrop-blur-sm hover:bg-yellow-50"
+                  }`}
+                  onClick={(e) => toggleFavorite(e, user.id)}
+                >
+                  {pendingFavoriteId === user.id || !favoritesReady ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Heart className={`w-5 h-5 ${isFav ? "fill-current" : ""}`} />
+                  )}
+                </Button>
+              )}
             </div>
 
             {user.skills && user.skills.length > 0 && (
@@ -451,25 +456,27 @@ export default function DirectoryPage() {
 
             {/* Filter toggles row */}
             <div className="flex items-center gap-3 flex-wrap">
-              <Button
-                data-testid="button-filter-favorites"
-                variant="ghost"
-                size="sm"
-                className={`rounded-full px-4 font-medium border transition-all ${
-                  showFavoritesOnly
-                    ? "bg-yellow-400 hover:bg-yellow-500 text-white border-yellow-400 shadow-yellow-300/40 shadow-md"
-                    : "bg-white border-purple-300 text-purple-600 hover:border-yellow-400 hover:text-yellow-600 hover:bg-yellow-50"
-                }`}
-                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-              >
-                <Heart className={`w-4 h-4 mr-1.5 ${showFavoritesOnly ? "fill-current" : ""}`} />
-                Favorites
-                {favoritedIds.size > 0 && (
-                  <span className={`ml-1.5 text-xs rounded-full px-1.5 py-0.5 font-bold ${showFavoritesOnly ? "bg-white/30 text-white" : "bg-purple-100 text-purple-700"}`}>
-                    {favoritedIds.size}
-                  </span>
-                )}
-              </Button>
+              {currentUserId && (
+                <Button
+                  data-testid="button-filter-favorites"
+                  variant="ghost"
+                  size="sm"
+                  className={`rounded-full px-4 font-medium border transition-all ${
+                    showFavoritesOnly
+                      ? "bg-yellow-400 hover:bg-yellow-500 text-white border-yellow-400 shadow-yellow-300/40 shadow-md"
+                      : "bg-white border-purple-300 text-purple-600 hover:border-yellow-400 hover:text-yellow-600 hover:bg-yellow-50"
+                  }`}
+                  onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                >
+                  <Heart className={`w-4 h-4 mr-1.5 ${showFavoritesOnly ? "fill-current" : ""}`} />
+                  Favorites
+                  {favoritedIds.size > 0 && (
+                    <span className={`ml-1.5 text-xs rounded-full px-1.5 py-0.5 font-bold ${showFavoritesOnly ? "bg-white/30 text-white" : "bg-purple-100 text-purple-700"}`}>
+                      {favoritedIds.size}
+                    </span>
+                  )}
+                </Button>
+              )}
 
               {(searchQuery || city !== "all" || profession !== "all" || genre !== "all" || showFavoritesOnly) && (
                 <Button

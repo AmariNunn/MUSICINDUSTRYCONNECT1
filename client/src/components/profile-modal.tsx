@@ -14,6 +14,9 @@ interface ProfileModalProps {
 
 export default function ProfileModal({ user, open, onClose }: ProfileModalProps) {
   const [isFavorited, setIsFavorited] = useState(false);
+  const currentUserId = typeof window !== "undefined"
+    ? localStorage.getItem("currentUserId")
+    : null;
 
   const handleFavorite = () => {
     setIsFavorited(!isFavorited);
@@ -126,13 +129,15 @@ export default function ProfileModal({ user, open, onClose }: ProfileModalProps)
             <Mail className="w-4 h-4 mr-2" />
             Message
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={handleFavorite}
-            className={isFavorited ? 'text-red-500 border-red-500 font-medium' : 'border-purple-600 text-purple-600 hover:bg-purple-50 font-medium'}
-          >
-            <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
-          </Button>
+          {currentUserId && (
+            <Button
+              variant="outline"
+              onClick={handleFavorite}
+              className={isFavorited ? 'text-red-500 border-red-500 font-medium' : 'border-purple-600 text-purple-600 hover:bg-purple-50 font-medium'}
+            >
+              <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

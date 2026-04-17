@@ -13,6 +13,9 @@ interface ProfileCardProps {
 
 export default function ProfileCard({ user, onViewProfile }: ProfileCardProps) {
   const [isFavorited, setIsFavorited] = useState(false);
+  const currentUserId = typeof window !== "undefined"
+    ? localStorage.getItem("currentUserId")
+    : null;
 
   const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -41,14 +44,16 @@ export default function ProfileCard({ user, onViewProfile }: ProfileCardProps) {
               <p className="text-gray-600">{user.profession}</p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleFavorite}
-            className={`${isFavorited ? 'text-red-500 hover:text-red-600' : 'text-gray-400 hover:text-red-500'}`}
-          >
-            <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
-          </Button>
+          {currentUserId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleFavorite}
+              className={`${isFavorited ? 'text-red-500 hover:text-red-600' : 'text-gray-400 hover:text-red-500'}`}
+            >
+              <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
+            </Button>
+          )}
         </div>
 
         <div className="space-y-2 mb-4">
