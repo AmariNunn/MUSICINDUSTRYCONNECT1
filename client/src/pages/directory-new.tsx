@@ -47,26 +47,52 @@ export default function DirectoryPage() {
     [favoritesData]
   );
 
+  const favQKey = ["/api/favorites", currentUserId];
+
   const addFavoriteMutation = useMutation({
     mutationFn: (favoriteUserId: number) =>
       apiRequest("POST", "/api/favorites", { userId: currentUserId, favoriteUserId }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/favorites", currentUserId] });
+    onMutate: async (favoriteUserId: number) => {
+      await queryClient.cancelQueries({ queryKey: favQKey });
+      const previous = queryClient.getQueryData<Favorite[]>(favQKey) ?? [];
+      const optimistic: Favorite = { id: -1, userId: currentUserId!, favoriteUserId, createdAt: new Date() };
+      queryClient.setQueryData<Favorite[]>(favQKey, [...previous, optimistic]);
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(favQKey, ctx.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: favQKey });
     },
   });
 
   const removeFavoriteMutation = useMutation({
     mutationFn: (favoriteUserId: number) =>
       apiRequest("DELETE", `/api/favorites/${currentUserId}/${favoriteUserId}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/favorites", currentUserId] });
+    onMutate: async (favoriteUserId: number) => {
+      await queryClient.cancelQueries({ queryKey: favQKey });
+      const previous = queryClient.getQueryData<Favorite[]>(favQKey) ?? [];
+      queryClient.setQueryData<Favorite[]>(favQKey, previous.filter((f) => f.favoriteUserId !== favoriteUserId));
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(favQKey, ctx.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: favQKey });
     },
   });
+
+  const pendingFavoriteId =
+    (addFavoriteMutation.isPending ? addFavoriteMutation.variables : null) ??
+    (removeFavoriteMutation.isPending ? removeFavoriteMutation.variables : null);
 
   const toggleFavorite = (e: React.MouseEvent, userId: number) => {
     e.preventDefault();
     e.stopPropagation();
     if (!currentUserId) return;
+    if (pendingFavoriteId === userId) return;
     if (favoritedIds.has(userId)) {
       removeFavoriteMutation.mutate(userId);
     } else {
@@ -216,14 +242,19 @@ export default function DirectoryPage() {
                 variant="ghost"
                 size="sm"
                 data-testid={`button-favorite-${user.id}`}
-                className={`w-10 h-10 rounded-full border-2 shadow-lg transition-all duration-300 hover:scale-110 ${
+                disabled={pendingFavoriteId === user.id}
+                className={`w-10 h-10 rounded-full border-2 shadow-lg transition-all duration-300 hover:scale-110 disabled:opacity-60 disabled:cursor-not-allowed ${
                   isFav
                     ? "bg-gradient-to-br from-yellow-400 to-yellow-500 border-yellow-400 text-white hover:from-yellow-500 hover:to-yellow-600 shadow-yellow-500/30"
                     : "border-purple-300 text-purple-400 hover:border-yellow-400 hover:text-yellow-500 bg-white/70 backdrop-blur-sm hover:bg-yellow-50"
                 }`}
                 onClick={(e) => toggleFavorite(e, user.id)}
               >
-                <Heart className={`w-5 h-5 ${isFav ? "fill-current" : ""}`} />
+                {pendingFavoriteId === user.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Heart className={`w-5 h-5 ${isFav ? "fill-current" : ""}`} />
+                )}
               </Button>
             </div>
 
