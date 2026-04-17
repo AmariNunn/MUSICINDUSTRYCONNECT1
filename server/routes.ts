@@ -402,9 +402,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  function getActingUserId(req: any): number | null {
+    // The app's auth pattern stores currentUserId in localStorage on the
+    // client. We require it to be echoed back in an x-user-id header so a
+    // request can't post on behalf of a different account just by changing
+    // the body. Same trust model as the rest of the app's routes.
+    const raw = req.header("x-user-id");
+    if (!raw) return null;
+    const n = parseInt(String(raw));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+
   app.post("/api/gallery", async (req, res) => {
     try {
       const data = createGalleryPostSchema.parse(req.body);
+
+      const actingId = getActingUserId(req);
+      if (!actingId || actingId !== data.userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
 
       // Validate ownership: confirm user exists
       const owner = await storage.getUser(data.userId);
@@ -447,11 +463,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/gallery/:postId", async (req, res) => {
     try {
       const postId = parseInt(req.params.postId);
-      const userId = parseInt(String(req.query.userId ?? ""));
-      if (!userId) return res.status(400).json({ message: "userId is required" });
+      const actingId = getActingUserId(req);
+      if (!actingId) return res.status(401).json({ message: "Not authenticated" });
       const existing = await storage.getGalleryPostById(postId);
       if (!existing) return res.status(404).json({ message: "Post not found" });
-      if (existing.userId !== userId) return res.status(403).json({ message: "Not authorized" });
+      if (existing.userId !== actingId) return res.status(403).json({ message: "Not authorized" });
       const deleted = await storage.deleteGalleryPost(postId);
       if (!deleted) return res.status(500).json({ message: "Failed to delete post" });
       res.json({ success: true });
@@ -545,6 +561,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user_id INTEGER NOT NULL REFERENCES users(id),
           favorite_user_id INTEGER NOT NULL REFERENCES users(id),
           created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS gallery_posts (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id),
+          caption TEXT NOT NULL DEFAULT '',
+          created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS gallery_items (
+          id SERIAL PRIMARY KEY,
+          post_id INTEGER NOT NULL REFERENCES gallery_posts(id),
+          media_url TEXT NOT NULL,
+          media_type TEXT NOT NULL,
+          order_index INTEGER NOT NULL DEFAULT 0
         )
       `);
 

@@ -195,7 +195,7 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
 
   const deleteMutation = useMutation({
     mutationFn: async (postId: number) => {
-      const res = await apiRequest("DELETE", `/api/gallery/${postId}?userId=${profileUserId}`);
+      const res = await apiRequest("DELETE", `/api/gallery/${postId}`);
       return res.json();
     },
     onSuccess: () => {

@@ -95,6 +95,27 @@ async function initializeDatabase() {
     `);
     console.log("✓ Favorites table created");
 
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS gallery_posts (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        caption TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log("✓ Gallery posts table created");
+
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS gallery_items (
+        id SERIAL PRIMARY KEY,
+        post_id INTEGER NOT NULL REFERENCES gallery_posts(id),
+        media_url TEXT NOT NULL,
+        media_type TEXT NOT NULL,
+        order_index INTEGER NOT NULL DEFAULT 0
+      )
+    `);
+    console.log("✓ Gallery items table created");
+
     console.log("\n✅ Database initialization complete!");
     process.exit(0);
   } catch (error) {
