@@ -496,12 +496,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!result.ok) {
         return res.status(404).send("Not found");
       }
-      const value = result.value as unknown;
-      const bytes: Buffer = Buffer.isBuffer(value)
-        ? value
-        : Array.isArray(value) && Buffer.isBuffer((value as Buffer[])[0])
-          ? (value as Buffer[])[0]
-          : Buffer.from(value as Uint8Array);
+      const value: unknown = result.value;
+      let bytes: Buffer;
+      if (Buffer.isBuffer(value)) {
+        bytes = value;
+      } else if (Array.isArray(value) && Buffer.isBuffer(value[0])) {
+        bytes = value[0];
+      } else if (value instanceof Uint8Array) {
+        bytes = Buffer.from(value);
+      } else {
+        return res.status(500).send("Unexpected storage payload");
+      }
       const ext = key.split(".").pop()?.toLowerCase() ?? "";
       const contentType =
         ext === "mp4" ? "video/mp4" :
@@ -532,6 +537,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const owner = await storage.getUser(data.userId);
       if (!owner) {
         return res.status(404).json({ message: "User not found" });
+      }
+
+      // Every media URL must be one this user uploaded — i.e. it must
+      // resolve to a key under `gallery/<actingId>/...`. This prevents
+      // a user from referencing another user's media (which could
+      // otherwise be deleted later when this post is deleted).
+      const requiredPrefix = `${GALLERY_KEY_PREFIX}${actingId}/`;
+      for (const item of data.items) {
+        const key = galleryUrlToKey(item.mediaUrl);
+        if (!key || !key.startsWith(requiredPrefix)) {
+          return res.status(403).json({
+            message: "Media must be uploaded by the post owner",
+          });
+        }
       }
 
       const post = await storage.createGalleryPost(
