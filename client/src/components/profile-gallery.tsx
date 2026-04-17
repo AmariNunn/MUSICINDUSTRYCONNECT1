@@ -29,7 +29,7 @@ const MAX_ITEMS = 10;
 type DraftItem = {
   id: string;
   file: File;
-  dataUrl: string;
+  previewUrl: string;
   mediaType: "image" | "video";
 };
 
@@ -50,14 +50,6 @@ function formatTimeAgo(date: Date): string {
   return date.toLocaleDateString();
 }
 
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
 
 function GalleryCarousel({ post }: { post: GalleryPostWithItems }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
@@ -169,9 +161,27 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const items = drafts.map((d, idx) => ({
-        mediaUrl: d.dataUrl,
-        mediaType: d.mediaType,
+      const currentUserId =
+        typeof window !== "undefined" ? window.localStorage.getItem("currentUserId") : null;
+      const uploaded: { mediaUrl: string; mediaType: "image" | "video" }[] = [];
+      for (const d of drafts) {
+        const fd = new FormData();
+        fd.append("file", d.file);
+        const res = await fetch("/api/gallery/upload", {
+          method: "POST",
+          body: fd,
+          headers: currentUserId ? { "x-user-id": currentUserId } : undefined,
+        });
+        if (!res.ok) {
+          const text = (await res.text()) || res.statusText;
+          throw new Error(`Upload failed: ${text}`);
+        }
+        const json = (await res.json()) as { mediaUrl: string; mediaType: "image" | "video" };
+        uploaded.push(json);
+      }
+      const items = uploaded.map((u, idx) => ({
+        mediaUrl: u.mediaUrl,
+        mediaType: u.mediaType,
         orderIndex: idx,
       }));
       const res = await apiRequest("POST", "/api/gallery", {
@@ -242,24 +252,30 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
         });
         continue;
       }
-      try {
-        const dataUrl = await readFileAsDataUrl(file);
-        accepted.push({
-          id: `${file.name}-${file.size}-${Math.random()}`,
-          file,
-          dataUrl,
-          mediaType: isVideo ? "video" : "image",
-        });
-      } catch {
-        toast({ title: "Failed to read", description: file.name, variant: "destructive" });
-      }
+      accepted.push({
+        id: `${file.name}-${file.size}-${Math.random()}`,
+        file,
+        previewUrl: URL.createObjectURL(file),
+        mediaType: isVideo ? "video" : "image",
+      });
     }
     if (accepted.length > 0) setDrafts((prev) => [...prev, ...accepted]);
   };
 
   const removeDraft = (id: string) => {
-    setDrafts((prev) => prev.filter((d) => d.id !== id));
+    setDrafts((prev) => {
+      const target = prev.find((d) => d.id === id);
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((d) => d.id !== id);
+    });
   };
+
+  useEffect(() => {
+    return () => {
+      drafts.forEach((d) => URL.revokeObjectURL(d.previewUrl));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const moveDraft = (id: string, dir: -1 | 1) => {
     setDrafts((prev) => {
@@ -391,9 +407,9 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
                   >
                     <div className="aspect-square bg-black flex items-center justify-center">
                       {d.mediaType === "video" ? (
-                        <video src={d.dataUrl} className="w-full h-full object-contain" />
+                        <video src={d.previewUrl} className="w-full h-full object-contain" />
                       ) : (
-                        <img src={d.dataUrl} alt="" className="w-full h-full object-contain" />
+                        <img src={d.previewUrl} alt="" className="w-full h-full object-contain" />
                       )}
                     </div>
                     <div className="absolute top-1 right-1 flex gap-1">

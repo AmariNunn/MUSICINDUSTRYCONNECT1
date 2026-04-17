@@ -7,6 +7,9 @@ import { db } from "./db";
 import { sql, eq } from "drizzle-orm";
 import { users } from "@shared/schema";
 import { sendOpportunityApplicationEmail, sendNewConnectionEmail } from "./mailer";
+import multer from "multer";
+import { randomUUID } from "crypto";
+import { getObjectStorageClient } from "./object-storage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // User routes
@@ -373,8 +376,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
   const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // 50MB
 
+  const galleryUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: MAX_VIDEO_BYTES },
+  });
+
+  // Allow only our own gallery-served URLs to be persisted as media URLs.
+  // Files live in object storage and are served via /api/gallery/media/:key.
+  const GALLERY_URL_PREFIX = "/api/gallery/media/";
+  const isAllowedMediaUrl = (url: string) =>
+    typeof url === "string" &&
+    url.startsWith(GALLERY_URL_PREFIX) &&
+    /^[A-Za-z0-9_\-./]+$/.test(url.slice(GALLERY_URL_PREFIX.length));
+
   const galleryItemInputSchema = z.object({
-    mediaUrl: z.string().min(1),
+    mediaUrl: z.string().refine(isAllowedMediaUrl, {
+      message: "mediaUrl must be a /api/gallery/media/<key> URL returned by upload",
+    }),
     mediaType: z.enum(["image", "video"]),
     orderIndex: z.number().int().min(0),
   });
@@ -384,13 +402,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     caption: z.string().max(2000).default(""),
     items: z.array(galleryItemInputSchema).min(1).max(MAX_ITEMS_PER_POST),
   });
-
-  function approxBytesFromDataUrl(url: string): number {
-    const idx = url.indexOf(",");
-    if (idx < 0) return url.length;
-    const b64 = url.slice(idx + 1);
-    return Math.floor((b64.length * 3) / 4);
-  }
 
   app.get("/api/gallery/:userId", async (req, res) => {
     try {
@@ -413,6 +424,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return Number.isFinite(n) && n > 0 ? n : null;
   }
 
+  // Upload a single file to object storage; returns the URL to embed in
+  // a subsequent gallery post.
+  app.post(
+    "/api/gallery/upload",
+    galleryUpload.single("file"),
+    async (req, res) => {
+      try {
+        const actingId = getActingUserId(req);
+        if (!actingId) {
+          return res.status(401).json({ message: "Not authenticated" });
+        }
+        const file = (req as any).file as Express.Multer.File | undefined;
+        if (!file) return res.status(400).json({ message: "No file uploaded" });
+
+        const isImage = file.mimetype.startsWith("image/");
+        const isVideo = file.mimetype.startsWith("video/");
+        if (!isImage && !isVideo) {
+          return res.status(400).json({ message: "Only image or video files are allowed" });
+        }
+        const limit = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+        if (file.size > limit) {
+          return res
+            .status(413)
+            .json({ message: `${isVideo ? "Video" : "Image"} exceeds ${isVideo ? "50MB" : "10MB"} limit` });
+        }
+
+        const ext = (file.originalname.split(".").pop() ?? "").replace(/[^A-Za-z0-9]/g, "").slice(0, 8);
+        const key = `gallery/${actingId}/${randomUUID()}${ext ? "." + ext : ""}`;
+        const client = getObjectStorageClient();
+        const result = await client.uploadFromBytes(key, file.buffer, {
+          compress: false,
+        } as any);
+        if (!result.ok) {
+          return res
+            .status(502)
+            .json({ message: "Object storage upload failed", error: String(result.error) });
+        }
+        res.status(201).json({
+          mediaUrl: GALLERY_URL_PREFIX + key,
+          mediaType: isVideo ? "video" : "image",
+        });
+      } catch (error: any) {
+        if (error?.code === "LIMIT_FILE_SIZE") {
+          return res.status(413).json({ message: "File exceeds size limit" });
+        }
+        res.status(500).json({ message: "Upload failed", error: error?.message });
+      }
+    },
+  );
+
+  // Stream stored media back to the browser.
+  app.get(/^\/api\/gallery\/media\/(.+)$/, async (req, res) => {
+    try {
+      const key = (req.params as any)[0] as string;
+      if (!key || !/^[A-Za-z0-9_\-./]+$/.test(key)) {
+        return res.status(400).send("Invalid key");
+      }
+      const client = getObjectStorageClient();
+      const result = await client.downloadAsBytes(key);
+      if (!result.ok) {
+        return res.status(404).send("Not found");
+      }
+      const bytes = (result.value as any)[0] ?? result.value;
+      const ext = key.split(".").pop()?.toLowerCase() ?? "";
+      const contentType =
+        ext === "mp4" ? "video/mp4" :
+        ext === "mov" ? "video/quicktime" :
+        ext === "webm" ? "video/webm" :
+        ext === "png" ? "image/png" :
+        ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
+        ext === "gif" ? "image/gif" :
+        ext === "webp" ? "image/webp" :
+        "application/octet-stream";
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      res.send(Buffer.from(bytes as any));
+    } catch (error: any) {
+      res.status(500).send("Failed to fetch media");
+    }
+  });
+
   app.post("/api/gallery", async (req, res) => {
     try {
       const data = createGalleryPostSchema.parse(req.body);
@@ -422,25 +514,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Not authorized" });
       }
 
-      // Validate ownership: confirm user exists
       const owner = await storage.getUser(data.userId);
       if (!owner) {
         return res.status(404).json({ message: "User not found" });
-      }
-
-      // Validate per-item size limits when sent as data URLs
-      for (const item of data.items) {
-        if (item.mediaUrl.startsWith("data:")) {
-          const size = approxBytesFromDataUrl(item.mediaUrl);
-          const limit = item.mediaType === "video" ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
-          if (size > limit) {
-            return res.status(413).json({
-              message: `${item.mediaType === "video" ? "Video" : "Image"} exceeds ${
-                item.mediaType === "video" ? "50MB" : "10MB"
-              } limit`,
-            });
-          }
-        }
       }
 
       const post = await storage.createGalleryPost(
