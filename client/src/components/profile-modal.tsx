@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { X, CheckCircle, Heart, Plus, Mail, Users, Briefcase } from "lucide-react";
+import { X, CheckCircle, Heart, Plus, Mail, Users, Briefcase, Loader2 } from "lucide-react";
 import type { User } from "@shared/schema";
 
 interface ProfileModalProps {
