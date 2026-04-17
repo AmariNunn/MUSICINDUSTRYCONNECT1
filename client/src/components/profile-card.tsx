@@ -1,10 +1,10 @@
-import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MapPin, Music, Eye, Heart, Plus, CheckCircle } from "lucide-react";
+import { MapPin, Music, Eye, Heart, Plus, CheckCircle, Loader2 } from "lucide-react";
 import type { User } from "@shared/schema";
+import { useFavorites } from "@/hooks/use-favorites";
 
 interface ProfileCardProps {
   user: User;
@@ -12,14 +12,13 @@ interface ProfileCardProps {
 }
 
 export default function ProfileCard({ user, onViewProfile }: ProfileCardProps) {
-  const [isFavorited, setIsFavorited] = useState(false);
-  const currentUserId = typeof window !== "undefined"
-    ? localStorage.getItem("currentUserId")
-    : null;
+  const { currentUserId, favoritedIds, favoritesReady, pendingFavoriteId, toggleFavorite } = useFavorites();
+  const isFavorited = favoritedIds.has(user.id);
+  const isPending = pendingFavoriteId === user.id;
 
   const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsFavorited(!isFavorited);
+    toggleFavorite(user.id);
   };
 
   const getAvailabilityColor = (availability: string) => {
@@ -49,9 +48,14 @@ export default function ProfileCard({ user, onViewProfile }: ProfileCardProps) {
               variant="ghost"
               size="sm"
               onClick={handleFavorite}
+              disabled={!favoritesReady || isPending}
               className={`${isFavorited ? 'text-red-500 hover:text-red-600' : 'text-gray-400 hover:text-red-500'}`}
             >
-              <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
+              {isPending || !favoritesReady ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
+              )}
             </Button>
           )}
         </div>

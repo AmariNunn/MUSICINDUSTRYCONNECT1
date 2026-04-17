@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useFavorites } from "@/hooks/use-favorites";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,13 +13,12 @@ interface ProfileModalProps {
 }
 
 export default function ProfileModal({ user, open, onClose }: ProfileModalProps) {
-  const [isFavorited, setIsFavorited] = useState(false);
-  const currentUserId = typeof window !== "undefined"
-    ? localStorage.getItem("currentUserId")
-    : null;
+  const { currentUserId, favoritedIds, favoritesReady, pendingFavoriteId, toggleFavorite } = useFavorites();
+  const isFavorited = favoritedIds.has(user.id);
+  const isPending = pendingFavoriteId === user.id;
 
   const handleFavorite = () => {
-    setIsFavorited(!isFavorited);
+    toggleFavorite(user.id);
   };
 
   const getAvailabilityColor = (availability: string) => {
@@ -133,9 +132,14 @@ export default function ProfileModal({ user, open, onClose }: ProfileModalProps)
             <Button
               variant="outline"
               onClick={handleFavorite}
+              disabled={!favoritesReady || isPending}
               className={isFavorited ? 'text-red-500 border-red-500 font-medium' : 'border-purple-600 text-purple-600 hover:bg-purple-50 font-medium'}
             >
-              <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+              {isPending || !favoritesReady ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+              )}
             </Button>
           )}
         </div>
