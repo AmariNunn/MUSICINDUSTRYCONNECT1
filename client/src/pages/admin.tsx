@@ -513,6 +513,7 @@ function PostsTab() {
       content,
       type,
       isPaid,
+      price: editPriceArg,
       applicationQuestions,
     }: {
       id: number;
@@ -525,7 +526,7 @@ function PostsTab() {
       const body: Record<string, unknown> = { content, type };
       if (type === "opportunity") {
         body.isPaid = isPaid ?? true;
-        body.price = price?.trim() ?? "";
+        body.price = editPriceArg?.trim() ?? "";
         body.applicationQuestions = applicationQuestions ?? [];
       }
       const res = await apiRequest("PATCH", `/api/admin/posts/${id}`, body);
