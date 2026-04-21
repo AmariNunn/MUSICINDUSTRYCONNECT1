@@ -530,7 +530,7 @@ function PostsTab() {
             New Core post
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6 space-y-5">
+        <CardContent className="p-6 space-y-5 text-[#000000]">
           <div className="grid sm:grid-cols-[240px_1fr] gap-5 items-start">
             <div className="space-y-2">
               <Label className="text-gray-600">Core section</Label>
@@ -587,7 +587,6 @@ function PostsTab() {
           </div>
         </CardContent>
       </Card>
-
       <Card className="border-gray-200 shadow-sm rounded-2xl bg-white">
         <CardHeader className="border-b border-gray-100 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
