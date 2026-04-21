@@ -239,7 +239,6 @@ function UsersTab({ currentAdminId }: { currentAdminId: number }) {
           accent="purple"
         />
       </div>
-
       <Card className="border-gray-200 shadow-sm rounded-2xl bg-white">
         <CardHeader className="border-b border-gray-100 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -275,7 +274,7 @@ function UsersTab({ currentAdminId }: { currentAdminId: number }) {
               {filtered.map((u) => (
                 <li
                   key={u.id}
-                  className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-3 py-4 rounded-xl hover:bg-purple-50/40 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-3 py-4 rounded-xl hover:bg-purple-50/40 transition-colors text-[#000000]"
                   data-testid={`row-user-${u.id}`}
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
