@@ -177,8 +177,8 @@ export default function DirectoryPage() {
       const nameMatch =
         queryTokens.length === 0 || queryTokens.every((t) => haystack.includes(t));
 
-      const userLocationN = normalize(user.location || "");
-      const cityMatch = !cityNeedle || userLocationN.includes(cityNeedle);
+      const userLocationN = ` ${normalize(user.location || "")} `;
+      const cityMatch = !cityNeedle || userLocationN.includes(` ${cityNeedle} `);
 
       const professionMatch =
         profession === "all" ||
