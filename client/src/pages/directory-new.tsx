@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Heart, MapPin, Users, Music2, Loader2, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { CityCombobox } from "@/components/city-combobox";
 import { getGenreBadge, getProfessionBadge } from "@/lib/badges";
 import goldBadge from "@assets/Gold_Level-removebg-preview_1762468528106.png";
 import platinumBadge from "@assets/Platinum Level_1762468203581.png";
@@ -103,18 +104,6 @@ export default function DirectoryPage() {
     }
   };
 
-  const cities = [
-    { value: "all", label: "All Cities" },
-    { value: "los-angeles", label: "Los Angeles" },
-    { value: "new-york", label: "New York" },
-    { value: "chicago", label: "Chicago" },
-    { value: "miami", label: "Miami" },
-    { value: "seattle", label: "Seattle" },
-    { value: "sacramento", label: "Sacramento" },
-    { value: "nashville", label: "Nashville" },
-    { value: "atlanta", label: "Atlanta" },
-  ];
-
   const professions = [
     { value: "all", label: "All Professions" },
     { value: "Artist", label: "Artist - Singer, Rapper, Performer" },
@@ -161,30 +150,43 @@ export default function DirectoryPage() {
     { value: "Gospel", label: "Gospel / Christian / Inspirational" },
   ];
 
-  const filterUsers = (userList: User[]) => {
-    return userList.filter((user) => {
-      const q = searchQuery.toLowerCase();
-      const nameMatch =
-        !q ||
-        `${user.firstName} ${user.lastName}`.toLowerCase().includes(q) ||
-        (user.pkaName || "").toLowerCase().includes(q) ||
-        (user.location || "").toLowerCase().includes(q) ||
-        user.profession.some((p) => p.toLowerCase().includes(q)) ||
-        user.genre.some((g) => g.toLowerCase().includes(q)) ||
-        user.skills.some((s) => s.toLowerCase().includes(q));
+  const normalize = (s: string) =>
+    (s || "")
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
 
-      const userLocation = user.location || "";
-      const cityMatch =
-        city === "all" ||
-        userLocation.toLowerCase().replace(/\s+/g, "-").includes(city);
+  const filterUsers = (userList: User[]) => {
+    const queryTokens = normalize(searchQuery).split(" ").filter(Boolean);
+    const cityNeedle = city === "all" ? "" : normalize(city.split(",")[0] || city);
+
+    return userList.filter((user) => {
+      const haystack = normalize(
+        [
+          user.firstName,
+          user.lastName,
+          user.pkaName || "",
+          user.location || "",
+          ...user.profession,
+          ...user.genre,
+          ...user.skills,
+        ].join(" "),
+      );
+
+      const nameMatch =
+        queryTokens.length === 0 || queryTokens.every((t) => haystack.includes(t));
+
+      const userLocationN = normalize(user.location || "");
+      const cityMatch = !cityNeedle || userLocationN.includes(cityNeedle);
 
       const professionMatch =
         profession === "all" ||
-        user.profession.some((p) => p.toLowerCase() === profession.toLowerCase());
+        user.profession.some((p) => normalize(p) === normalize(profession));
 
       const genreMatch =
         genre === "all" ||
-        user.genre.some((g) => g.toLowerCase().includes(genre.toLowerCase()));
+        user.genre.some((g) => normalize(g).includes(normalize(genre)));
 
       return nameMatch && cityMatch && professionMatch && genreMatch;
     });
@@ -400,21 +402,7 @@ export default function DirectoryPage() {
             {/* Dropdown filters row */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <div className="flex-1">
-                <Select value={city} onValueChange={setCity}>
-                  <SelectTrigger
-                    data-testid="select-city"
-                    className="bg-white border-purple-300 text-gray-700 rounded-full h-10 sm:h-11 text-sm shadow-sm hover:border-purple-400 transition-all"
-                  >
-                    <SelectValue placeholder="All Cities" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-purple-200 shadow-lg">
-                    {cities.map((c) => (
-                      <SelectItem key={c.value} value={c.value} className="text-gray-700 hover:bg-purple-50 focus:bg-purple-100">
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CityCombobox value={city} onChange={setCity} />
               </div>
 
               <div className="flex-1">
