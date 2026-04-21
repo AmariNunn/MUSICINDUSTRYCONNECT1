@@ -2,19 +2,34 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Mic, Home, Search, MessageCircle, UserPlus, LogIn, LogOut } from "lucide-react";
+import { Menu, Mic, Home, Search, MessageCircle, UserPlus, LogIn, LogOut, Shield } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import type { User } from "@shared/schema";
 import micLogo from "@assets/MIC Logo 2_1752952044953.png";
 
 export default function Navigation() {
   const [location, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
   // Check login status on mount and when location changes
   useEffect(() => {
     const userId = localStorage.getItem('currentUserId');
     setIsLoggedIn(!!userId);
+    setCurrentUserId(userId);
   }, [location]);
+
+  const meQuery = useQuery<User>({
+    queryKey: ["/api/users", currentUserId],
+    enabled: !!currentUserId,
+    queryFn: async () => {
+      const res = await fetch(`/api/users/${currentUserId}`);
+      if (!res.ok) throw new Error("Failed to fetch user");
+      return res.json();
+    },
+  });
+  const isAdmin = !!meQuery.data?.isAdmin;
   
   const handleLogout = () => {
     localStorage.removeItem('currentUserId');
@@ -27,6 +42,7 @@ export default function Navigation() {
     { path: "/directory", label: "Directory", icon: Search },
     { path: "/core", label: "Core", icon: MessageCircle },
     ...(isLoggedIn ? [] : [{ path: "/join", label: "Join", icon: UserPlus }]),
+    ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: Shield }] : []),
   ];
 
   const isActive = (path: string) => location === path;

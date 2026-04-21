@@ -98,6 +98,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await storage.createUser(validatedData);
+      // The designated owner email is automatically promoted to admin on
+      // registration. This is the only place the app sets is_admin = true
+      // outside of a direct DB update / the startup routine.
+      if (user.email.toLowerCase() === "themusicindustryconnect@gmail.com") {
+        const promoted = await storage.setUserAdmin(user.id, true);
+        return res.status(201).json(promoted ?? user);
+      }
       res.status(201).json(user);
     } catch (error: any) {
       res.status(400).json({ message: "Invalid user data", error: error.message });
@@ -116,7 +123,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existingUser) {
         return res.status(404).json({ message: "User not found" });
       }
-      const updatedUser = await storage.updateUser(id, req.body);
+      // Strip admin flag from user-facing update endpoint — admin can only
+      // be granted by editing the database directly.
+      const { isAdmin: _ignoredAdmin, ...sanitizedUpdates } = req.body ?? {};
+      const updatedUser = await storage.updateUser(id, sanitizedUpdates);
       if (!updatedUser) {
         return res.status(500).json({ message: "Failed to update user" });
       }
@@ -124,6 +134,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error(`Error patching user ${req.params.id}:`, error);
       res.status(500).json({ message: "Failed to update user", error: error.message });
+    }
+  });
+
+  // Admin guard — checks the x-user-id header (same trust model as the
+  // gallery routes) and confirms that user has the is_admin flag set in
+  // the database. Returns the admin user record if authorized.
+  async function requireAdmin(req: any, res: any): Promise<{ id: number } | null> {
+    const raw = req.header("x-user-id");
+    const id = raw ? parseInt(String(raw)) : NaN;
+    if (!Number.isFinite(id) || id <= 0) {
+      res.status(401).json({ message: "Not authenticated" });
+      return null;
+    }
+    const user = await storage.getUser(id);
+    if (!user || !user.isAdmin) {
+      res.status(403).json({ message: "Admin access required" });
+      return null;
+    }
+    return user;
+  }
+
+  app.get("/api/admin/users", async (req, res) => {
+    const admin = await requireAdmin(req, res);
+    if (!admin) return;
+    try {
+      const all = await storage.getAllUsers();
+      res.json(all.map(({ password: _p, ...u }) => u));
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to fetch users", error: error.message });
+    }
+  });
+
+  app.patch("/api/admin/users/:id/member-level", async (req, res) => {
+    const admin = await requireAdmin(req, res);
+    if (!admin) return;
+    try {
+      const id = parseInt(req.params.id);
+      const { memberLevel } = req.body ?? {};
+      if (memberLevel !== "Gold" && memberLevel !== "Platinum") {
+        return res.status(400).json({ message: "memberLevel must be Gold or Platinum" });
+      }
+      const updated = await storage.updateUser(id, { memberLevel });
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      const { password: _p, ...rest } = updated;
+      res.json(rest);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to update member level", error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", async (req, res) => {
+    const admin = await requireAdmin(req, res);
+    if (!admin) return;
+    try {
+      const id = parseInt(req.params.id);
+      if (id === admin.id) {
+        return res.status(400).json({ message: "You cannot delete your own admin account" });
+      }
+      const ok = await storage.deleteUser(id);
+      if (!ok) return res.status(404).json({ message: "User not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to delete user", error: error.message });
+    }
+  });
+
+  app.get("/api/admin/posts", async (req, res) => {
+    const admin = await requireAdmin(req, res);
+    if (!admin) return;
+    try {
+      const all = await storage.getPosts();
+      res.json(all);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to fetch posts", error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/posts/:id", async (req, res) => {
+    const admin = await requireAdmin(req, res);
+    if (!admin) return;
+    try {
+      const id = parseInt(req.params.id);
+      const ok = await storage.deletePost(id);
+      if (!ok) return res.status(404).json({ message: "Post not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to delete post", error: error.message });
+    }
+  });
+
+  app.post("/api/admin/posts", async (req, res) => {
+    const admin = await requireAdmin(req, res);
+    if (!admin) return;
+    try {
+      const adminPostSchema = z.object({
+        content: z.string().min(1),
+        type: z.enum(["post", "opportunity", "tip", "milestone"]).default("post"),
+      });
+      const data = adminPostSchema.parse(req.body);
+      const post = await storage.createPost({
+        userId: admin.id,
+        content: data.content,
+        type: data.type,
+        isPaid: true,
+        applicationQuestions: "[]",
+      });
+      res.status(201).json(post);
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid post data", error: error.message });
     }
   });
 

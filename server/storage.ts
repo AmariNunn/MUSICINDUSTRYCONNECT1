@@ -18,12 +18,15 @@ export interface IStorage {
   updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
   searchUsers(query: string, profession?: string, genre?: string): Promise<User[]>;
   getAllUsers(): Promise<User[]>;
+  deleteUser(id: number): Promise<boolean>;
+  setUserAdmin(id: number, isAdmin: boolean): Promise<User | undefined>;
 
   createPost(post: InsertPost): Promise<Post>;
   getPosts(): Promise<(Post & { author: User })[]>;
   getPostsByUser(userId: number): Promise<Post[]>;
   getPostById(id: number): Promise<Post | undefined>;
   updatePost(id: number, updates: Partial<Post>): Promise<Post | undefined>;
+  deletePost(id: number): Promise<boolean>;
 
   createConnection(connection: InsertConnection): Promise<Connection>;
   getConnectionsByUser(userId: number): Promise<Connection[]>;
@@ -112,6 +115,35 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(users);
   }
 
+  async deleteUser(id: number): Promise<boolean> {
+    const userPosts = await db.select().from(posts).where(eq(posts.userId, id));
+    const postIds = userPosts.map(p => p.id);
+    if (postIds.length > 0) {
+      await db.delete(comments).where(inArray(comments.postId, postIds));
+    }
+    await db.delete(comments).where(eq(comments.userId, id));
+    await db.delete(posts).where(eq(posts.userId, id));
+    await db.delete(favorites).where(
+      sql`${favorites.userId} = ${id} OR ${favorites.favoriteUserId} = ${id}`
+    );
+    await db.delete(connections).where(
+      sql`${connections.userId} = ${id} OR ${connections.connectedUserId} = ${id}`
+    );
+    const galleryRows = await db.select().from(galleryPosts).where(eq(galleryPosts.userId, id));
+    const galleryIds = galleryRows.map(g => g.id);
+    if (galleryIds.length > 0) {
+      await db.delete(galleryItems).where(inArray(galleryItems.postId, galleryIds));
+      await db.delete(galleryPosts).where(inArray(galleryPosts.id, galleryIds));
+    }
+    const result = await db.delete(users).where(eq(users.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async setUserAdmin(id: number, isAdmin: boolean): Promise<User | undefined> {
+    const result = await db.update(users).set({ isAdmin }).where(eq(users.id, id)).returning();
+    return result[0];
+  }
+
   async createPost(insertPost: InsertPost): Promise<Post> {
     const result = await db.insert(posts).values(insertPost).returning();
     return result[0];
@@ -143,6 +175,12 @@ export class DatabaseStorage implements IStorage {
   async updatePost(id: number, updates: Partial<Post>): Promise<Post | undefined> {
     const result = await db.update(posts).set(updates).where(eq(posts.id, id)).returning();
     return result[0];
+  }
+
+  async deletePost(id: number): Promise<boolean> {
+    await db.delete(comments).where(eq(comments.postId, id));
+    const result = await db.delete(posts).where(eq(posts.id, id)).returning();
+    return result.length > 0;
   }
 
   async createConnection(insertConnection: InsertConnection): Promise<Connection> {

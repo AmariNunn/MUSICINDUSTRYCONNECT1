@@ -12,6 +12,7 @@ import LandingPage from "@/pages/landing";
 import LoginPage from "@/pages/login";
 import ProfilePage from "@/pages/profile";
 import AccountSettingsPage from "@/pages/account-settings";
+import AdminPage from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 function ScrollToTop() {
@@ -38,6 +39,7 @@ function Router() {
             <Route path="/directory" component={DirectoryPage} />
             <Route path="/join" component={JoinPage} />
             <Route path="/core" component={CorePage} />
+            <Route path="/admin" component={AdminPage} />
             <Route component={NotFound} />
           </Switch>
         </div>

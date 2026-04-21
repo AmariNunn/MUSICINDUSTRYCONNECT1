@@ -1,6 +1,27 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { db } from "./db";
+import { sql } from "drizzle-orm";
+
+const ADMIN_EMAIL = "themusicindustryconnect@gmail.com";
+
+// Make sure the is_admin column exists (covers older databases that
+// pre-date the admin feature) and that the designated owner account is
+// flagged as admin whenever it exists. Admin can never be granted via
+// the app UI, only via this startup routine or a direct DB update.
+async function ensureAdminSetup() {
+  try {
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE
+    `);
+    await db.execute(sql`
+      UPDATE users SET is_admin = TRUE WHERE LOWER(email) = ${ADMIN_EMAIL}
+    `);
+  } catch (err: any) {
+    console.error("[admin] Failed to ensure admin setup:", err?.message ?? err);
+  }
+}
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -37,6 +58,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  await ensureAdminSetup();
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

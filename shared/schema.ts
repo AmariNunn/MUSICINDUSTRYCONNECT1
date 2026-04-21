@@ -18,6 +18,7 @@ export const users = pgTable("users", {
   avatar: text("avatar").notNull().default(""),
   verified: boolean("verified").notNull().default(false),
   memberLevel: text("member_level").notNull().default("Gold"), // Gold (Free) or Platinum (Paid)
+  isAdmin: boolean("is_admin").notNull().default(false),
   
   // Profile visibility settings
   showPicture: boolean("show_picture").notNull().default(true),
@@ -131,6 +132,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
   recentWork: true,
   availability: true,
   memberLevel: true,
+  isAdmin: true,
   showPicture: true,
   showEmail: true,
   showPhone: true,

@@ -207,8 +207,10 @@ export default function CorePage() {
     }
   });
 
-  const communityPosts = posts.filter(post => post.type === "post");
+  const communityPosts = posts.filter(post => post.type === "post" || post.type === "community");
   const opportunityPosts = posts.filter(post => post.type === "opportunity");
+  const resourcePosts = posts.filter(post => post.type === "resource");
+  const eventPosts = posts.filter(post => post.type === "event");
 
   const handleApplyClick = (opportunity: Post & { author: User }) => {
     setSelectedOpportunity(opportunity);
@@ -681,6 +683,32 @@ export default function CorePage() {
                   Access terminology, articles, links to important music companies, and educational videos
                 </p>
 
+                {resourcePosts.length > 0 && (
+                  <div className="space-y-3 mb-6">
+                    {resourcePosts.map((post) => (
+                      <Card
+                        key={post.id}
+                        className="bg-white border-[#c084fc]/20 rounded-2xl"
+                        data-testid={`card-resource-post-${post.id}`}
+                      >
+                        <CardContent className="p-5">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="inline-flex items-center text-[10px] uppercase tracking-wide font-semibold px-2 py-0.5 rounded-full bg-[#c084fc]/10 text-[#7c3aed] border border-[#c084fc]/30">
+                              From MiC
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {new Date(post.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-gray-800 whitespace-pre-wrap break-words">
+                            {post.content}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <Card className="bg-white border-[#c084fc]/20 rounded-2xl hover:shadow-lg transition-all">
                     <CardHeader>
@@ -751,6 +779,32 @@ export default function CorePage() {
                 <p className="text-gray-600 mb-6">
                   Upcoming MiC sponsored events, webinars, showcases, and more
                 </p>
+
+                {eventPosts.length > 0 && (
+                  <div className="space-y-3 mb-6">
+                    {eventPosts.map((post) => (
+                      <Card
+                        key={post.id}
+                        className="bg-white border-[#c084fc]/20 rounded-2xl"
+                        data-testid={`card-event-post-${post.id}`}
+                      >
+                        <CardContent className="p-5">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="inline-flex items-center text-[10px] uppercase tracking-wide font-semibold px-2 py-0.5 rounded-full bg-[#c084fc]/10 text-[#7c3aed] border border-[#c084fc]/30">
+                              From MiC
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {new Date(post.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-gray-800 whitespace-pre-wrap break-words">
+                            {post.content}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
 
                 <div className="space-y-4">
                   <Card className="bg-white border-[#c084fc]/20 rounded-2xl hover:shadow-lg transition-all">
