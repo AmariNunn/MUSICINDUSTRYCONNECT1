@@ -71,30 +71,20 @@ Preferred communication style: Simple, everyday language.
 - **Session Management**: Express sessions with in-memory store (ready for PostgreSQL session store upgrade)
 
 ### Database Status
-- ✅ DatabaseStorage class implemented using Drizzle ORM + Replit PostgreSQL
-- ✅ Database schema defined in shared/schema.ts with users, posts, connections, favorites, comments tables
-- ✅ Migrated from Supabase to Replit built-in PostgreSQL (DATABASE_URL / PG* env vars)
-- ✅ All tables created via `npm run db:push`
+- ✅ Active database: **Supabase PostgreSQL** (Transaction Pooler on `aws-0-us-west-2.pooler.supabase.com:6543`)
+- ✅ DatabaseStorage class implemented using Drizzle ORM
+- ✅ All tables exist in Supabase: users, posts, connections, favorites, comments, gallery_posts, gallery_items
+- ✅ `server/db.ts` requires `SUPABASE_DATABASE_URL` when any Supabase secret is present; refuses to fall back silently
+- ✅ `drizzle.config.ts` uses `SUPABASE_DATABASE_URL` so `npm run db:push` targets Supabase
 
-### How to Enable Permanent Database Storage
+### Required Secrets
+- `SUPABASE_DATABASE_URL` — Supabase Transaction Pooler URI (`postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres`)
+- `MAILERSEND_API_KEY` — MailerSend API key for connection and opportunity application emails
+- `SUPABASE_URL` and `SUPABASE_ANON_KEY` — present (Supabase project URL and anon key)
 
-**Option 1: Use Replit Database (Recommended for development)**
-1. Go to the Database tab in Replit sidebar
-2. Click to provision a new database
-3. Run `npm run db:push` to create tables
-4. In `server/storage.ts`, change `export const storage = new MemStorage();` to `export const storage = new DatabaseStorage();`
-5. Restart the app
-
-**Option 2: Switch to Supabase (Recommended for production)**
-1. Create a Supabase project at supabase.com
-2. Go to Project Settings > Database > Connection string
-3. Copy the "URI" connection string
-4. Update the DATABASE_URL secret in Replit Secrets tab
-5. Run `npm run db:push` to create tables
-6. In `server/storage.ts`, change to `export const storage = new DatabaseStorage();`
-7. Restart the app
-
-**Note**: The Drizzle ORM code works identically with Replit PostgreSQL, Supabase, or any PostgreSQL provider. Only DATABASE_URL needs to change.
+### Database Connection Notes
+- The Supabase Transaction Pooler (PgBouncer, port 6543) uses an intermediate self-signed CA in its certificate chain. `server/db.ts` detects pooler URLs (pooler.supabase.com) and rewrites `sslmode` to `no-verify`, keeping TLS encryption while skipping chain verification. Same approach is applied in `drizzle.config.ts`.
+- `npm run db:push` targets Supabase via `SUPABASE_DATABASE_URL`. If drizzle-kit's interactive prompts block `db:push`, apply schema changes directly via the Supabase SQL editor (Dashboard → SQL editor).
 
 ### Development Setup
 - **Monorepo Structure**: Client, server, and shared code in a single repository
