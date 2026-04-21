@@ -463,11 +463,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .slice(0, 8);
         const key = `${GALLERY_KEY_PREFIX}${actingId}/${randomUUID()}${ext ? "." + ext : ""}`;
         const client = getObjectStorageClient();
-        const result = await client.upload(key, file.buffer);
+        const result = await client.upload(key, file.buffer, file.mimetype);
         if (!result.ok) {
           return res
             .status(502)
-            .json({ message: "Object storage upload failed", error: String(result.error) });
+            .json({ message: `Storage upload failed: ${result.error}`, error: String(result.error) });
         }
         res.status(201).json({
           mediaUrl: GALLERY_URL_PREFIX + key,
@@ -477,7 +477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (error?.code === "LIMIT_FILE_SIZE") {
           return res.status(413).json({ message: "File exceeds size limit" });
         }
-        res.status(500).json({ message: "Upload failed", error: error?.message });
+        res.status(500).json({ message: error?.message ?? "Upload failed", error: error?.message });
       }
     },
   );

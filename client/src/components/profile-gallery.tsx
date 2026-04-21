@@ -183,8 +183,17 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
           headers: currentUserId ? { "x-user-id": currentUserId } : undefined,
         });
         if (!res.ok) {
-          const text = (await res.text()) || res.statusText;
-          throw new Error(`Upload failed: ${text}`);
+          let detail = res.statusText;
+          const raw = await res.text();
+          if (raw) {
+            try {
+              const parsed = JSON.parse(raw);
+              detail = parsed.message || parsed.error || raw;
+            } catch {
+              detail = raw;
+            }
+          }
+          throw new Error(detail);
         }
         const json = (await res.json()) as { mediaUrl: string; mediaType: "image" | "video" };
         uploaded.push({ ...json, caption: d.caption });
