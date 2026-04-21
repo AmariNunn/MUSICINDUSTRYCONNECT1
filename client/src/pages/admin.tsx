@@ -536,14 +536,14 @@ function PostsTab() {
               <Label className="text-gray-600">Core section</Label>
               <Select value={type} onValueChange={(v) => setType(v as PostType)}>
                 <SelectTrigger
-                  className="bg-gray-50 border-gray-200"
+                  className="bg-gray-50 border-gray-200 text-black"
                   data-testid="select-new-post-type"
                 >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {POST_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
+                    <SelectItem key={t} value={t} className="text-black">
                       {POST_TYPE_LABEL[t]}
                     </SelectItem>
                   ))}
