@@ -69,6 +69,7 @@ export const posts = pgTable("posts", {
   content: text("content").notNull(),
   type: text("type").notNull().default("post"), // post, opportunity, tip, milestone
   isPaid: boolean("is_paid").notNull().default(true), // For opportunities: paid or unpaid
+  price: text("price").default(""), // For opportunities: display price / rate
   applicationQuestions: text("application_questions").default("[]"), // JSON array of custom questions for applicants
   likes: integer("likes").notNull().default(0),
   comments: integer("comments").notNull().default(0),
