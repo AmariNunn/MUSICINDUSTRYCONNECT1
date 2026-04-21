@@ -428,7 +428,7 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
                   {drafts.map((d, idx) => (
                     <div
                       key={d.id}
-                      className="flex gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100"
+                    className="flex gap-3 bg-purple-50/70 rounded-xl p-3 border border-purple-100"
                       data-testid={`draft-item-${idx}`}
                     >
                       <div className="relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-gray-200">
@@ -450,7 +450,7 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
                           value={d.caption}
                           maxLength={500}
                           onChange={(e) => updateDraftCaption(d.id, e.target.value)}
-                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white placeholder:text-gray-400"
+                          className="w-full text-sm border border-purple-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white text-gray-900 placeholder:text-gray-500"
                           data-testid={`input-item-caption-${idx}`}
                         />
                         <div className="flex items-center gap-1">
@@ -493,7 +493,7 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full border border-dashed border-gray-300 hover:border-purple-300 rounded-xl py-3 flex items-center justify-center gap-2 text-sm text-gray-400 hover:text-purple-500 hover:bg-purple-50 transition-colors"
+                    className="w-full border border-dashed border-purple-200 hover:border-purple-300 rounded-xl py-3 flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-purple-600 hover:bg-purple-100 transition-colors"
                     data-testid="button-add-more-files"
                   >
                     <ImagePlus className="w-4 h-4" />
@@ -509,7 +509,7 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
                     onChange={(e) => setPostCaption(e.target.value)}
                     rows={2}
                     maxLength={2000}
-                    className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white placeholder:text-gray-400 resize-none"
+                    className="w-full text-sm border border-purple-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white text-gray-900 placeholder:text-gray-500 resize-none"
                     data-testid="input-gallery-caption"
                   />
                 </div>
