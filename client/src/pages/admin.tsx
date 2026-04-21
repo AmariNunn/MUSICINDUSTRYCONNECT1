@@ -87,20 +87,20 @@ export default function AdminPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero */}
         <div
-          className="rounded-3xl border border-[#c084fc]/25 p-6 sm:p-8 mb-8 shadow-[0_15px_45px_-18px_rgba(192,132,252,0.45)]"
+          className="rounded-3xl border border-[#c084fc]/20 p-6 sm:p-8 mb-8 shadow-[0_15px_45px_-18px_rgba(192,132,252,0.35)] bg-white/90"
           style={{
             background:
-              "linear-gradient(135deg, color-mix(in oklab, #c084fc 18%, transparent), transparent 55%)",
+              "linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(244,231,255,0.96) 100%)",
           }}
         >
-          <div className="flex items-center gap-2 text-sm font-medium text-[#c084fc] mb-2">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#7c3aed] mb-2">
             <Sparkles className="w-4 h-4" />
             Admin · Owner controls
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#111827]">
             Admin
           </h1>
-          <p className="text-gray-600 mt-1 max-w-2xl">
+          <p className="text-gray-700 mt-1 max-w-2xl">
             Manage community members and Core posts. Admin access can only be
             granted by editing the database directly.
           </p>
