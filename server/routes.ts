@@ -246,6 +246,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/admin/posts/:id", async (req, res) => {
+    const admin = await requireAdmin(req, res);
+    if (!admin) return;
+    try {
+      const id = parseInt(req.params.id);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid post id" });
+      }
+      const existing = await storage.getPostById(id);
+      if (!existing) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      const editPostSchema = z.object({
+        content: z.string().trim().min(1).optional(),
+        type: z
+          .enum([
+            "post",
+            "opportunity",
+            "tip",
+            "milestone",
+            "community",
+            "resource",
+            "event",
+          ])
+          .optional(),
+      });
+      const data = editPostSchema.parse(req.body);
+      if (data.content === undefined && data.type === undefined) {
+        return res.status(400).json({ message: "Nothing to update" });
+      }
+      const updated = await storage.updatePost(id, data);
+      if (!updated) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid post data", error: error.message });
+    }
+  });
+
   // Post routes
   app.get("/api/posts", async (req, res) => {
     try {

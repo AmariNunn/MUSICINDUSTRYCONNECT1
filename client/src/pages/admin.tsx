@@ -35,6 +35,9 @@ import {
   Crown,
   Sparkles,
   Plus,
+  Pencil,
+  X,
+  Check,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -418,6 +421,9 @@ function PostsTab() {
   const [type, setType] = useState<PostType>("community");
   const [pendingDelete, setPendingDelete] = useState<AdminPost | null>(null);
   const [filter, setFilter] = useState<"all" | PostType>("all");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [editType, setEditType] = useState<string>("community");
 
   const postsQuery = useQuery<AdminPost[]>({
     queryKey: ["/api/admin/posts"],
@@ -470,6 +476,47 @@ function PostsTab() {
       });
     },
   });
+
+  const editMutation = useMutation({
+    mutationFn: async ({
+      id,
+      content,
+      type,
+    }: {
+      id: number;
+      content: string;
+      type: string;
+    }) => {
+      const res = await apiRequest("PATCH", `/api/admin/posts/${id}`, {
+        content,
+        type,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      toast({ title: "Post updated" });
+      setEditingId(null);
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Failed to update",
+        description: err?.message ?? "Try again",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const startEdit = (p: AdminPost) => {
+    setEditingId(p.id);
+    setEditContent(p.content);
+    setEditType(p.type);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+  };
 
   const all = postsQuery.data ?? [];
   const visible = filter === "all" ? all : all.filter((p) => p.type === filter);
@@ -581,47 +628,141 @@ function PostsTab() {
             />
           ) : (
             <ul className="divide-y divide-gray-100">
-              {visible.map((p) => (
-                <li
-                  key={p.id}
-                  className="px-3 py-4 flex flex-col sm:flex-row gap-3 hover:bg-purple-50/40 rounded-xl transition-colors"
-                  data-testid={`row-post-${p.id}`}
-                >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#c084fc] to-purple-500 text-white text-sm font-semibold flex items-center justify-center shrink-0 shadow-sm">
-                    {initialsOf(p.author)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                      <span className="font-semibold text-gray-900 truncate">
-                        {p.author.firstName} {p.author.lastName}
-                      </span>
-                      <span
-                        className={`text-[10px] uppercase tracking-wide font-semibold px-2 py-0.5 rounded-full border ${POST_TYPE_STYLE[p.type] ?? POST_TYPE_STYLE.community}`}
-                      >
-                        {p.type}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {new Date(p.createdAt).toLocaleString()}
-                      </span>
-                    </div>
-                    <p
-                      className="text-sm text-gray-700 whitespace-pre-wrap break-words line-clamp-4"
-                      data-testid={`text-post-content-${p.id}`}
-                    >
-                      {p.content}
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 self-start text-red-500 border-red-200 bg-white hover:bg-red-50 hover:text-red-600"
-                    onClick={() => setPendingDelete(p)}
-                    data-testid={`button-delete-post-${p.id}`}
+              {visible.map((p) => {
+                const isEditing = editingId === p.id;
+                return (
+                  <li
+                    key={p.id}
+                    className="px-3 py-4 flex flex-col sm:flex-row gap-3 hover:bg-purple-50/40 rounded-xl transition-colors"
+                    data-testid={`row-post-${p.id}`}
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </li>
-              ))}
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#c084fc] to-purple-500 text-white text-sm font-semibold flex items-center justify-center shrink-0 shadow-sm">
+                      {initialsOf(p.author)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                        <span className="font-semibold text-gray-900 truncate">
+                          {p.author.firstName} {p.author.lastName}
+                        </span>
+                        {!isEditing && (
+                          <span
+                            className={`text-[10px] uppercase tracking-wide font-semibold px-2 py-0.5 rounded-full border ${POST_TYPE_STYLE[p.type] ?? POST_TYPE_STYLE.community}`}
+                          >
+                            {p.type}
+                          </span>
+                        )}
+                        <span className="text-xs text-gray-400">
+                          {new Date(p.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <Select
+                            value={editType}
+                            onValueChange={(v) => setEditType(v)}
+                          >
+                            <SelectTrigger
+                              className="bg-gray-50 border-gray-200 h-9 w-full sm:w-[260px]"
+                              data-testid={`select-edit-post-type-${p.id}`}
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {POST_TYPES.map((t) => (
+                                <SelectItem key={t} value={t}>
+                                  {POST_TYPE_LABEL[t]}
+                                </SelectItem>
+                              ))}
+                              {!(POST_TYPES as readonly string[]).includes(
+                                editType,
+                              ) && (
+                                <SelectItem value={editType}>
+                                  {editType} (legacy)
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <Textarea
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            rows={4}
+                            className="bg-gray-50 border-gray-200 focus:border-[#c084fc] focus:ring-[#c084fc]/30 resize-none"
+                            data-testid={`textarea-edit-post-content-${p.id}`}
+                          />
+                        </div>
+                      ) : (
+                        <p
+                          className="text-sm text-gray-700 whitespace-pre-wrap break-words line-clamp-4"
+                          data-testid={`text-post-content-${p.id}`}
+                        >
+                          {p.content}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex sm:flex-col items-center gap-2 self-start">
+                      {isEditing ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 text-emerald-600 border-emerald-200 bg-white hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-40"
+                            disabled={
+                              !editContent.trim() || editMutation.isPending
+                            }
+                            onClick={() =>
+                              editMutation.mutate({
+                                id: p.id,
+                                content: editContent.trim(),
+                                type: editType,
+                              })
+                            }
+                            title="Save changes"
+                            data-testid={`button-save-edit-post-${p.id}`}
+                          >
+                            {editMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Check className="w-4 h-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 text-gray-500 border-gray-200 bg-white hover:bg-gray-50 hover:text-gray-700"
+                            onClick={cancelEdit}
+                            title="Cancel"
+                            data-testid={`button-cancel-edit-post-${p.id}`}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 text-[#7c3aed] border-purple-200 bg-white hover:bg-purple-50 hover:text-[#c084fc]"
+                            onClick={() => startEdit(p)}
+                            title="Edit post"
+                            data-testid={`button-edit-post-${p.id}`}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 text-red-500 border-red-200 bg-white hover:bg-red-50 hover:text-red-600"
+                            onClick={() => setPendingDelete(p)}
+                            data-testid={`button-delete-post-${p.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
 
