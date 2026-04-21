@@ -3,7 +3,6 @@ import useEmblaCarousel from "embla-carousel-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -15,7 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Upload,
+  ImagePlus,
   Loader2,
   ArrowLeft,
   ArrowRight,
@@ -31,6 +30,7 @@ type DraftItem = {
   file: File;
   previewUrl: string;
   mediaType: "image" | "video";
+  caption: string;
 };
 
 interface ProfileGalleryProps {
@@ -49,7 +49,6 @@ function formatTimeAgo(date: Date): string {
   if (days < 30) return `${days}d ago`;
   return date.toLocaleDateString();
 }
-
 
 function GalleryCarousel({ post }: { post: GalleryPostWithItems }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
@@ -75,74 +74,85 @@ function GalleryCarousel({ post }: { post: GalleryPostWithItems }) {
 
   const items = post.items;
   const multi = items.length > 1;
+  const currentItem = items[selectedIndex];
 
   return (
-    <div className="relative">
-      <div className="overflow-hidden rounded-lg bg-black" ref={emblaRef}>
-        <div className="flex">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="relative flex-[0_0_100%] min-w-0 flex items-center justify-center"
-              style={{ aspectRatio: "4 / 3" }}
-              data-testid={`gallery-item-${item.id}`}
-            >
-              {item.mediaType === "video" ? (
-                <video
-                  src={item.mediaUrl}
-                  controls
-                  playsInline
-                  className="w-full h-full object-contain bg-black"
-                />
-              ) : (
-                <img
-                  src={item.mediaUrl}
-                  alt=""
-                  className="w-full h-full object-contain bg-black"
-                />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {multi && (
-        <>
-          <button
-            type="button"
-            onClick={scrollPrev}
-            disabled={selectedIndex === 0}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 disabled:opacity-30 text-white rounded-full p-2"
-            aria-label="Previous"
-            data-testid={`button-carousel-prev-${post.id}`}
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button
-            type="button"
-            onClick={scrollNext}
-            disabled={selectedIndex === items.length - 1}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 disabled:opacity-30 text-white rounded-full p-2"
-            aria-label="Next"
-            data-testid={`button-carousel-next-${post.id}`}
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
-            {items.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => scrollTo(i)}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  i === selectedIndex ? "bg-white w-4" : "bg-white/50"
-                }`}
-                aria-label={`Go to slide ${i + 1}`}
-                data-testid={`dot-carousel-${post.id}-${i}`}
-              />
+    <div>
+      <div className="relative">
+        <div className="overflow-hidden rounded-t-xl bg-gray-100" ref={emblaRef}>
+          <div className="flex">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="relative flex-[0_0_100%] min-w-0 flex items-center justify-center bg-gray-100"
+                style={{ aspectRatio: "4 / 3" }}
+                data-testid={`gallery-item-${item.id}`}
+              >
+                {item.mediaType === "video" ? (
+                  <video
+                    src={item.mediaUrl}
+                    controls
+                    playsInline
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <img
+                    src={item.mediaUrl}
+                    alt={item.caption || ""}
+                    className="w-full h-full object-contain"
+                  />
+                )}
+              </div>
             ))}
           </div>
-        </>
+        </div>
+
+        {multi && (
+          <>
+            <button
+              type="button"
+              onClick={scrollPrev}
+              disabled={selectedIndex === 0}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white disabled:opacity-30 text-gray-700 rounded-full p-1.5 shadow-sm transition-all"
+              aria-label="Previous"
+              data-testid={`button-carousel-prev-${post.id}`}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={scrollNext}
+              disabled={selectedIndex === items.length - 1}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white disabled:opacity-30 text-gray-700 rounded-full p-1.5 shadow-sm transition-all"
+              aria-label="Next"
+              data-testid={`button-carousel-next-${post.id}`}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+              {items.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => scrollTo(i)}
+                  className={`h-1.5 rounded-full transition-all ${
+                    i === selectedIndex
+                      ? "bg-purple-500 w-4"
+                      : "bg-gray-400/60 w-1.5"
+                  }`}
+                  aria-label={`Go to slide ${i + 1}`}
+                  data-testid={`dot-carousel-${post.id}-${i}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {currentItem?.caption && (
+        <div className="px-3 pt-2 text-sm text-gray-600 italic" data-testid={`text-item-caption-${currentItem.id}`}>
+          {currentItem.caption}
+        </div>
       )}
     </div>
   );
@@ -152,7 +162,7 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
   const { toast } = useToast();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [drafts, setDrafts] = useState<DraftItem[]>([]);
-  const [caption, setCaption] = useState("");
+  const [postCaption, setPostCaption] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: posts = [], isLoading } = useQuery<GalleryPostWithItems[]>({
@@ -163,7 +173,7 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
     mutationFn: async () => {
       const currentUserId =
         typeof window !== "undefined" ? window.localStorage.getItem("currentUserId") : null;
-      const uploaded: { mediaUrl: string; mediaType: "image" | "video" }[] = [];
+      const uploaded: { mediaUrl: string; mediaType: "image" | "video"; caption: string }[] = [];
       for (const d of drafts) {
         const fd = new FormData();
         fd.append("file", d.file);
@@ -177,16 +187,17 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
           throw new Error(`Upload failed: ${text}`);
         }
         const json = (await res.json()) as { mediaUrl: string; mediaType: "image" | "video" };
-        uploaded.push(json);
+        uploaded.push({ ...json, caption: d.caption });
       }
       const items = uploaded.map((u, idx) => ({
         mediaUrl: u.mediaUrl,
         mediaType: u.mediaType,
+        caption: u.caption,
         orderIndex: idx,
       }));
       const res = await apiRequest("POST", "/api/gallery", {
         userId: profileUserId,
-        caption: caption.trim(),
+        caption: postCaption.trim(),
         items,
       });
       return res.json();
@@ -194,7 +205,7 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/gallery", profileUserId] });
       setDrafts([]);
-      setCaption("");
+      setPostCaption("");
       setUploadOpen(false);
       toast({ title: "Posted to gallery!" });
     },
@@ -257,6 +268,7 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
         file,
         previewUrl: URL.createObjectURL(file),
         mediaType: isVideo ? "video" : "image",
+        caption: "",
       });
     }
     if (accepted.length > 0) setDrafts((prev) => [...prev, ...accepted]);
@@ -268,6 +280,10 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
       if (target) URL.revokeObjectURL(target.previewUrl);
       return prev.filter((d) => d.id !== id);
     });
+  };
+
+  const updateDraftCaption = (id: string, caption: string) => {
+    setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, caption } : d)));
   };
 
   useEffect(() => {
@@ -287,6 +303,13 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
       [next[idx], next[swap]] = [next[swap], next[idx]];
       return next;
     });
+  };
+
+  const closeDialog = () => {
+    drafts.forEach((d) => URL.revokeObjectURL(d.previewUrl));
+    setDrafts([]);
+    setPostCaption("");
+    setUploadOpen(false);
   };
 
   return (
@@ -312,35 +335,35 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12 text-gray-500">
+          <div className="flex items-center justify-center py-12 text-gray-400">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
             Loading gallery…
           </div>
         ) : posts.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-            <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p className="font-medium">No gallery posts yet</p>
+          <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+            <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-40" />
+            <p className="font-medium text-gray-500">No gallery posts yet</p>
             {isOwner && (
-              <p className="text-sm mt-1">Share photos and short clips of your work.</p>
+              <p className="text-sm mt-1 text-gray-400">Share photos and short clips of your work.</p>
             )}
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
             {posts.map((post) => (
               <div
                 key={post.id}
-                className="border border-gray-200 rounded-lg overflow-hidden bg-white"
+                className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm"
                 data-testid={`gallery-post-${post.id}`}
               >
                 <GalleryCarousel post={post} />
-                <div className="p-3 space-y-2">
+                <div className="px-3 pb-3 pt-2 space-y-1">
                   {post.caption && (
-                    <p className="text-sm text-gray-800 whitespace-pre-wrap" data-testid={`text-caption-${post.id}`}>
+                    <p className="text-sm font-medium text-gray-800 whitespace-pre-wrap" data-testid={`text-caption-${post.id}`}>
                       {post.caption}
                     </p>
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500" data-testid={`text-timestamp-${post.id}`}>
+                    <span className="text-xs text-gray-400" data-testid={`text-timestamp-${post.id}`}>
                       {formatTimeAgo(new Date(post.createdAt))}
                     </span>
                     {isOwner && (
@@ -352,10 +375,10 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
                             deleteMutation.mutate(post.id);
                           }
                         }}
-                        className="text-gray-500 hover:text-red-600"
+                        className="text-gray-400 hover:text-red-500 h-7 w-7 p-0"
                         data-testid={`button-delete-gallery-${post.id}`}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     )}
                   </div>
@@ -366,16 +389,16 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
         )}
       </CardContent>
 
-      <Dialog open={uploadOpen} onOpenChange={(o) => !createMutation.isPending && setUploadOpen(o)}>
-        <DialogContent className="bg-white max-w-2xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={uploadOpen} onOpenChange={(o) => { if (!createMutation.isPending) { if (!o) closeDialog(); else setUploadOpen(true); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>New gallery post</DialogTitle>
-            <DialogDescription>
-              Up to {MAX_ITEMS} items. Photos up to 10 MB, videos up to 50 MB.
+            <DialogTitle className="text-lg font-semibold">New gallery post</DialogTitle>
+            <DialogDescription className="text-sm text-gray-500">
+              Up to {MAX_ITEMS} items · Photos up to 10 MB · Videos up to 50 MB
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-5 pt-1">
             <input
               ref={fileInputRef}
               type="file"
@@ -385,96 +408,118 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
               className="hidden"
               data-testid="input-gallery-file"
             />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={drafts.length >= MAX_ITEMS}
-              className="w-full"
-              data-testid="button-pick-files"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              {drafts.length === 0 ? "Choose photos / videos" : `Add more (${drafts.length}/${MAX_ITEMS})`}
-            </Button>
 
-            {drafts.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {drafts.map((d, idx) => (
-                  <div
-                    key={d.id}
-                    className="relative border border-gray-200 rounded-lg overflow-hidden bg-gray-50"
-                    data-testid={`draft-item-${idx}`}
-                  >
-                    <div className="aspect-square bg-black flex items-center justify-center">
-                      {d.mediaType === "video" ? (
-                        <video src={d.previewUrl} className="w-full h-full object-contain" />
-                      ) : (
-                        <img src={d.previewUrl} alt="" className="w-full h-full object-contain" />
-                      )}
-                    </div>
-                    <div className="absolute top-1 right-1 flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => removeDraft(d.id)}
-                        className="bg-black/70 hover:bg-black text-white rounded-full p-1"
-                        aria-label="Remove"
-                        data-testid={`button-remove-draft-${idx}`}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                    <div className="absolute bottom-1 left-1 right-1 flex items-center justify-between">
-                      <span className="bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
-                        {d.mediaType === "video" ? <VideoIcon className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
-                        {idx + 1}
-                      </span>
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => moveDraft(d.id, -1)}
-                          disabled={idx === 0}
-                          className="bg-black/70 hover:bg-black disabled:opacity-30 text-white rounded p-0.5"
-                          aria-label="Move left"
-                          data-testid={`button-move-left-${idx}`}
-                        >
-                          <ArrowLeft className="w-3 h-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => moveDraft(d.id, 1)}
-                          disabled={idx === drafts.length - 1}
-                          className="bg-black/70 hover:bg-black disabled:opacity-30 text-white rounded p-0.5"
-                          aria-label="Move right"
-                          data-testid={`button-move-right-${idx}`}
-                        >
-                          <ArrowRight className="w-3 h-3" />
-                        </button>
+            {drafts.length === 0 ? (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full border-2 border-dashed border-purple-200 hover:border-purple-400 bg-purple-50 hover:bg-purple-100 rounded-xl py-10 flex flex-col items-center gap-2 transition-colors cursor-pointer"
+                data-testid="button-pick-files"
+              >
+                <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                  <ImagePlus className="w-6 h-6 text-purple-500" />
+                </div>
+                <span className="text-sm font-medium text-purple-600">Choose photos or videos</span>
+                <span className="text-xs text-gray-400">or drag and drop</span>
+              </button>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  {drafts.map((d, idx) => (
+                    <div
+                      key={d.id}
+                      className="flex gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100"
+                      data-testid={`draft-item-${idx}`}
+                    >
+                      <div className="relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-gray-200">
+                        {d.mediaType === "video" ? (
+                          <video src={d.previewUrl} className="w-full h-full object-cover" />
+                        ) : (
+                          <img src={d.previewUrl} alt="" className="w-full h-full object-cover" />
+                        )}
+                        <span className="absolute top-1 left-1 bg-white/80 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5 font-medium">
+                          {d.mediaType === "video" ? <VideoIcon className="w-2.5 h-2.5" /> : <ImageIcon className="w-2.5 h-2.5" />}
+                          {idx + 1}
+                        </span>
+                      </div>
+
+                      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                        <input
+                          type="text"
+                          placeholder="Add a caption for this photo…"
+                          value={d.caption}
+                          maxLength={500}
+                          onChange={(e) => updateDraftCaption(d.id, e.target.value)}
+                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white placeholder:text-gray-400"
+                          data-testid={`input-item-caption-${idx}`}
+                        />
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => moveDraft(d.id, -1)}
+                            disabled={idx === 0}
+                            className="text-gray-400 hover:text-gray-600 disabled:opacity-30 p-1 rounded-md hover:bg-gray-100 transition-colors"
+                            aria-label="Move up"
+                            data-testid={`button-move-left-${idx}`}
+                          >
+                            <ArrowLeft className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveDraft(d.id, 1)}
+                            disabled={idx === drafts.length - 1}
+                            className="text-gray-400 hover:text-gray-600 disabled:opacity-30 p-1 rounded-md hover:bg-gray-100 transition-colors"
+                            aria-label="Move down"
+                            data-testid={`button-move-right-${idx}`}
+                          >
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeDraft(d.id)}
+                            className="ml-auto text-gray-400 hover:text-red-500 p-1 rounded-md hover:bg-red-50 transition-colors"
+                            aria-label="Remove"
+                            data-testid={`button-remove-draft-${idx}`}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+
+                {drafts.length < MAX_ITEMS && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full border border-dashed border-gray-300 hover:border-purple-300 rounded-xl py-3 flex items-center justify-center gap-2 text-sm text-gray-400 hover:text-purple-500 hover:bg-purple-50 transition-colors"
+                    data-testid="button-add-more-files"
+                  >
+                    <ImagePlus className="w-4 h-4" />
+                    Add more ({drafts.length}/{MAX_ITEMS})
+                  </button>
+                )}
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Post caption (optional)</label>
+                  <textarea
+                    placeholder="Write something about this post…"
+                    value={postCaption}
+                    onChange={(e) => setPostCaption(e.target.value)}
+                    rows={2}
+                    maxLength={2000}
+                    className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white placeholder:text-gray-400 resize-none"
+                    data-testid="input-gallery-caption"
+                  />
+                </div>
+              </>
             )}
 
-            <div>
-              <Textarea
-                placeholder="Add a caption (optional)…"
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                rows={3}
-                maxLength={2000}
-                data-testid="input-gallery-caption"
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-1">
               <Button
                 variant="ghost"
-                onClick={() => {
-                  setDrafts([]);
-                  setCaption("");
-                  setUploadOpen(false);
-                }}
+                onClick={closeDialog}
                 disabled={createMutation.isPending}
                 data-testid="button-cancel-gallery"
               >
@@ -483,13 +528,13 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
               <Button
                 onClick={() => createMutation.mutate()}
                 disabled={drafts.length === 0 || createMutation.isPending}
-                className="bg-[#c084fc] hover:bg-[#a855f7] text-white"
+                className="bg-[#c084fc] hover:bg-[#a855f7] text-white min-w-[90px]"
                 data-testid="button-publish-gallery"
               >
                 {createMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Publishing…
+                    Uploading…
                   </>
                 ) : (
                   "Publish"

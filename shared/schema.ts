@@ -109,6 +109,7 @@ export const galleryItems = pgTable("gallery_items", {
   postId: integer("post_id").notNull().references(() => galleryPosts.id),
   mediaUrl: text("media_url").notNull(),
   mediaType: text("media_type").notNull(),
+  caption: text("caption").notNull().default(""),
   orderIndex: integer("order_index").notNull().default(0),
 });
 

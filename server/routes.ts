@@ -401,6 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       message: "mediaUrl must be a /api/gallery/media/<key> URL returned by upload",
     }),
     mediaType: z.enum(["image", "video"]),
+    caption: z.string().max(500).default(""),
     orderIndex: z.number().int().min(0),
   });
 
@@ -558,6 +559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data.items.map((item) => ({
           mediaUrl: item.mediaUrl,
           mediaType: item.mediaType,
+          caption: item.caption ?? "",
           orderIndex: item.orderIndex,
         })),
       );
