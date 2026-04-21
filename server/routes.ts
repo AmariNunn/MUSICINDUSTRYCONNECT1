@@ -463,7 +463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .slice(0, 8);
         const key = `${GALLERY_KEY_PREFIX}${actingId}/${randomUUID()}${ext ? "." + ext : ""}`;
         const client = getObjectStorageClient();
-        const result = await client.uploadFromBytes(key, file.buffer, { compress: false });
+        const result = await client.upload(key, file.buffer);
         if (!result.ok) {
           return res
             .status(502)
