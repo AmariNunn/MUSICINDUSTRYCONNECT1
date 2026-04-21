@@ -26,9 +26,12 @@ if (!connectionString) {
   );
 }
 
-const isSupabase = connectionString.includes("supabase.co");
+const needsSsl =
+  connectionString.includes("supabase.co") ||
+  connectionString.includes("neon.tech") ||
+  /[?&]sslmode=require/i.test(connectionString);
 export const pool = new Pool({
   connectionString,
-  ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
+  ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
 });
 export const db = drizzle(pool, { schema });
