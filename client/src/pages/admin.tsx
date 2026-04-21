@@ -432,6 +432,7 @@ function PostsTab() {
   const [content, setContent] = useState("");
   const [type, setType] = useState<PostType>("community");
   const [isPaid, setIsPaid] = useState(true);
+  const [price, setPrice] = useState("");
   const [questions, setQuestions] = useState<string[]>([]);
   const [questionDraft, setQuestionDraft] = useState("");
   const [pendingDelete, setPendingDelete] = useState<AdminPost | null>(null);
@@ -440,6 +441,7 @@ function PostsTab() {
   const [editContent, setEditContent] = useState("");
   const [editType, setEditType] = useState<string>("community");
   const [editIsPaid, setEditIsPaid] = useState(true);
+  const [editPrice, setEditPrice] = useState("");
   const [editQuestions, setEditQuestions] = useState<string[]>([]);
   const [editQuestionDraft, setEditQuestionDraft] = useState("");
 
@@ -459,6 +461,7 @@ function PostsTab() {
       };
       if (type === "opportunity") {
         body.isPaid = isPaid;
+        body.price = price.trim();
         body.applicationQuestions = questions;
       }
       const res = await apiRequest("POST", "/api/admin/posts", body);
@@ -470,6 +473,7 @@ function PostsTab() {
       setContent("");
       setType("community");
       setIsPaid(true);
+      setPrice("");
       setQuestions([]);
       setQuestionDraft("");
       toast({ title: "Post created" });
@@ -515,11 +519,13 @@ function PostsTab() {
       content: string;
       type: string;
       isPaid?: boolean;
+      price?: string;
       applicationQuestions?: string[];
     }) => {
       const body: Record<string, unknown> = { content, type };
       if (type === "opportunity") {
         body.isPaid = isPaid ?? true;
+        body.price = price?.trim() ?? "";
         body.applicationQuestions = applicationQuestions ?? [];
       }
       const res = await apiRequest("PATCH", `/api/admin/posts/${id}`, body);
@@ -545,6 +551,7 @@ function PostsTab() {
     setEditContent(p.content);
     setEditType(p.type);
     setEditIsPaid(p.isPaid ?? true);
+    setEditPrice((p as AdminPost & { price?: string }).price ?? "");
     setEditQuestions(parseQuestions(p.applicationQuestions));
     setEditQuestionDraft("");
   };
@@ -567,6 +574,9 @@ function PostsTab() {
     setEditQuestions((prev) => [...prev, q]);
     setEditQuestionDraft("");
   };
+
+  const isOpportunityType = type === "opportunity";
+  const isEditingOpportunity = editType === "opportunity";
 
   const all = postsQuery.data ?? [];
   const visible = filter === "all" ? all : all.filter((p) => p.type === filter);
@@ -647,6 +657,20 @@ function PostsTab() {
                   checked={isPaid}
                   onCheckedChange={setIsPaid}
                   data-testid="switch-new-post-paid"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-800 font-semibold">Price</Label>
+                <p className="text-xs text-gray-600">
+                  Add the amount, rate, or payout details here.
+                </p>
+                <Input
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="e.g. $250, $75/hr, negotiable"
+                  className="bg-white border-amber-200 text-black"
+                  data-testid="input-new-post-price"
                 />
               </div>
 
@@ -841,7 +865,7 @@ function PostsTab() {
                             className="bg-gray-50 border-gray-200 focus:border-[#c084fc] focus:ring-[#c084fc]/30 resize-none text-black"
                             data-testid={`textarea-edit-post-content-${p.id}`}
                           />
-                          {editType === "opportunity" && (
+                          {isEditingOpportunity && (
                             <div className="rounded-lg border border-amber-200 bg-amber-50/40 p-3 space-y-3">
                               <div className="flex items-center justify-between gap-3">
                                 <Label className="text-gray-800 font-semibold text-sm">
@@ -851,6 +875,18 @@ function PostsTab() {
                                   checked={editIsPaid}
                                   onCheckedChange={setEditIsPaid}
                                   data-testid={`switch-edit-post-paid-${p.id}`}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-gray-800 font-semibold text-sm">
+                                  Price
+                                </Label>
+                                <Input
+                                  value={editPrice}
+                                  onChange={(e) => setEditPrice(e.target.value)}
+                                  placeholder="e.g. $250, $75/hr, negotiable"
+                                  className="bg-white border-amber-200 text-black h-8 text-sm"
+                                  data-testid={`input-edit-post-price-${p.id}`}
                                 />
                               </div>
                               <div className="space-y-2">
@@ -944,6 +980,7 @@ function PostsTab() {
                                 content: editContent.trim(),
                                 type: editType,
                                 isPaid: editIsPaid,
+                                  price: editPrice.trim(),
                                 applicationQuestions: editQuestions,
                               })
                             }

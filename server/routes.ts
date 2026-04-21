@@ -242,6 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ])
           .default("community"),
         isPaid: z.boolean().optional(),
+        price: z.union([z.string(), z.number()]).optional(),
         applicationQuestions: z.array(z.string().trim().min(1)).optional(),
       });
       const data = adminPostSchema.parse(req.body);
@@ -251,6 +252,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: data.content,
         type: data.type,
         isPaid: isOpportunity ? data.isPaid ?? true : true,
+        price:
+          isOpportunity && data.price !== undefined
+            ? String(data.price).trim()
+            : "",
         applicationQuestions:
           isOpportunity && data.applicationQuestions
             ? JSON.stringify(data.applicationQuestions)
@@ -288,6 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ])
           .optional(),
         isPaid: z.boolean().optional(),
+        price: z.union([z.string(), z.number()]).optional(),
         applicationQuestions: z.array(z.string().trim().min(1)).optional(),
       });
       const data = editPostSchema.parse(req.body);
@@ -295,6 +301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data.content === undefined &&
         data.type === undefined &&
         data.isPaid === undefined &&
+        data.price === undefined &&
         data.applicationQuestions === undefined
       ) {
         return res.status(400).json({ message: "Nothing to update" });
@@ -306,6 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (data.type !== undefined) updatePayload.type = data.type;
       if (isOpportunity) {
         if (data.isPaid !== undefined) updatePayload.isPaid = data.isPaid;
+        if (data.price !== undefined) updatePayload.price = String(data.price).trim();
         if (data.applicationQuestions !== undefined) {
           updatePayload.applicationQuestions = JSON.stringify(
             data.applicationQuestions,
@@ -313,6 +321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } else if (data.type !== undefined && existing.type === "opportunity") {
         updatePayload.isPaid = true;
+        updatePayload.price = "";
         updatePayload.applicationQuestions = "[]";
       }
       const updated = await storage.updatePost(id, updatePayload);
