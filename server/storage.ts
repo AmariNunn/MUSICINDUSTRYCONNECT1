@@ -1,4 +1,4 @@
-import { eq, or, ilike, sql } from "drizzle-orm";
+import { eq, or, ilike, sql, inArray } from "drizzle-orm";
 import { db } from "./db";
 import {
   users, posts, connections, favorites, comments,
@@ -325,7 +325,7 @@ export class DatabaseStorage implements IStorage {
     const itemsRows = await db
       .select()
       .from(galleryItems)
-      .where(sql`${galleryItems.postId} = ANY(${ids})`);
+      .where(inArray(galleryItems.postId, ids));
     const byPost = new Map<number, GalleryItem[]>();
     for (const item of itemsRows) {
       const list = byPost.get(item.postId) ?? [];
