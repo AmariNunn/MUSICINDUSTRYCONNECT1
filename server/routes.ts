@@ -230,15 +230,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const adminPostSchema = z.object({
         content: z.string().min(1),
-        type: z.enum(["post", "opportunity", "tip", "milestone"]).default("post"),
+        type: z
+          .enum([
+            "post",
+            "community",
+            "opportunity",
+            "resource",
+            "event",
+            "tip",
+            "milestone",
+          ])
+          .default("community"),
+        isPaid: z.boolean().optional(),
+        applicationQuestions: z.array(z.string().trim().min(1)).optional(),
       });
       const data = adminPostSchema.parse(req.body);
+      const isOpportunity = data.type === "opportunity";
       const post = await storage.createPost({
         userId: admin.id,
         content: data.content,
         type: data.type,
-        isPaid: true,
-        applicationQuestions: "[]",
+        isPaid: isOpportunity ? data.isPaid ?? true : true,
+        applicationQuestions:
+          isOpportunity && data.applicationQuestions
+            ? JSON.stringify(data.applicationQuestions)
+            : "[]",
       });
       res.status(201).json(post);
     } catch (error: any) {
@@ -271,12 +287,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
             "event",
           ])
           .optional(),
+        isPaid: z.boolean().optional(),
+        applicationQuestions: z.array(z.string().trim().min(1)).optional(),
       });
       const data = editPostSchema.parse(req.body);
-      if (data.content === undefined && data.type === undefined) {
+      if (
+        data.content === undefined &&
+        data.type === undefined &&
+        data.isPaid === undefined &&
+        data.applicationQuestions === undefined
+      ) {
         return res.status(400).json({ message: "Nothing to update" });
       }
-      const updated = await storage.updatePost(id, data);
+      const nextType = data.type ?? existing.type;
+      const isOpportunity = nextType === "opportunity";
+      const updatePayload: Record<string, unknown> = {};
+      if (data.content !== undefined) updatePayload.content = data.content;
+      if (data.type !== undefined) updatePayload.type = data.type;
+      if (isOpportunity) {
+        if (data.isPaid !== undefined) updatePayload.isPaid = data.isPaid;
+        if (data.applicationQuestions !== undefined) {
+          updatePayload.applicationQuestions = JSON.stringify(
+            data.applicationQuestions,
+          );
+        }
+      } else if (data.type !== undefined && existing.type === "opportunity") {
+        updatePayload.isPaid = true;
+        updatePayload.applicationQuestions = "[]";
+      }
+      const updated = await storage.updatePost(id, updatePayload);
       if (!updated) {
         return res.status(404).json({ message: "Post not found" });
       }

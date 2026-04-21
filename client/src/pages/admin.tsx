@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -414,15 +415,33 @@ const POST_TYPE_STYLE: Record<string, string> = {
   milestone: "bg-sky-50 text-sky-700 border-sky-200",
 };
 
+function parseQuestions(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((q): q is string => typeof q === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 function PostsTab() {
   const { toast } = useToast();
   const [content, setContent] = useState("");
   const [type, setType] = useState<PostType>("community");
+  const [isPaid, setIsPaid] = useState(true);
+  const [questions, setQuestions] = useState<string[]>([]);
+  const [questionDraft, setQuestionDraft] = useState("");
   const [pendingDelete, setPendingDelete] = useState<AdminPost | null>(null);
   const [filter, setFilter] = useState<"all" | PostType>("all");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editContent, setEditContent] = useState("");
   const [editType, setEditType] = useState<string>("community");
+  const [editIsPaid, setEditIsPaid] = useState(true);
+  const [editQuestions, setEditQuestions] = useState<string[]>([]);
+  const [editQuestionDraft, setEditQuestionDraft] = useState("");
 
   const postsQuery = useQuery<AdminPost[]>({
     queryKey: ["/api/admin/posts"],
@@ -434,10 +453,15 @@ function PostsTab() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/admin/posts", {
+      const body: Record<string, unknown> = {
         content: content.trim(),
         type,
-      });
+      };
+      if (type === "opportunity") {
+        body.isPaid = isPaid;
+        body.applicationQuestions = questions;
+      }
+      const res = await apiRequest("POST", "/api/admin/posts", body);
       return res.json();
     },
     onSuccess: () => {
@@ -445,6 +469,9 @@ function PostsTab() {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       setContent("");
       setType("community");
+      setIsPaid(true);
+      setQuestions([]);
+      setQuestionDraft("");
       toast({ title: "Post created" });
     },
     onError: (err: any) => {
@@ -481,15 +508,21 @@ function PostsTab() {
       id,
       content,
       type,
+      isPaid,
+      applicationQuestions,
     }: {
       id: number;
       content: string;
       type: string;
+      isPaid?: boolean;
+      applicationQuestions?: string[];
     }) => {
-      const res = await apiRequest("PATCH", `/api/admin/posts/${id}`, {
-        content,
-        type,
-      });
+      const body: Record<string, unknown> = { content, type };
+      if (type === "opportunity") {
+        body.isPaid = isPaid ?? true;
+        body.applicationQuestions = applicationQuestions ?? [];
+      }
+      const res = await apiRequest("PATCH", `/api/admin/posts/${id}`, body);
       return res.json();
     },
     onSuccess: () => {
@@ -511,10 +544,28 @@ function PostsTab() {
     setEditingId(p.id);
     setEditContent(p.content);
     setEditType(p.type);
+    setEditIsPaid(p.isPaid ?? true);
+    setEditQuestions(parseQuestions(p.applicationQuestions));
+    setEditQuestionDraft("");
   };
 
   const cancelEdit = () => {
     setEditingId(null);
+    setEditQuestionDraft("");
+  };
+
+  const addQuestion = () => {
+    const q = questionDraft.trim();
+    if (!q) return;
+    setQuestions((prev) => [...prev, q]);
+    setQuestionDraft("");
+  };
+
+  const addEditQuestion = () => {
+    const q = editQuestionDraft.trim();
+    if (!q) return;
+    setEditQuestions((prev) => [...prev, q]);
+    setEditQuestionDraft("");
   };
 
   const all = postsQuery.data ?? [];
@@ -553,17 +604,120 @@ function PostsTab() {
               </p>
             </div>
             <div className="space-y-2">
-              <Label className="text-gray-600">Content</Label>
+              <Label className="text-gray-600">
+                {type === "opportunity"
+                  ? "Opportunity details"
+                  : type === "resource"
+                    ? "Resource"
+                    : type === "event"
+                      ? "Event details"
+                      : "Content"}
+              </Label>
               <Textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 rows={4}
-                placeholder="Write something for the community..."
-                className="bg-gray-50 border-gray-200 focus:border-[#c084fc] focus:ring-[#c084fc]/30 resize-none"
+                placeholder={
+                  type === "opportunity"
+                    ? "Describe the gig: role, requirements, dates, how to follow up..."
+                    : type === "resource"
+                      ? "Share a tip, article link, or resource for the community..."
+                      : type === "event"
+                        ? "Event name, date, time, location, and what to expect..."
+                        : "Write something for the community..."
+                }
+                className="bg-gray-50 border-gray-200 focus:border-[#c084fc] focus:ring-[#c084fc]/30 resize-none text-black"
                 data-testid="textarea-new-post-content"
               />
             </div>
           </div>
+
+          {type === "opportunity" && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <Label className="text-gray-800 font-semibold">
+                    Paid opportunity
+                  </Label>
+                  <p className="text-xs text-gray-600">
+                    Toggle off if this gig is unpaid (exposure, volunteer, etc.).
+                  </p>
+                </div>
+                <Switch
+                  checked={isPaid}
+                  onCheckedChange={setIsPaid}
+                  data-testid="switch-new-post-paid"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-800 font-semibold">
+                  Application questions
+                </Label>
+                <p className="text-xs text-gray-600">
+                  Applicants will answer these when they apply. Leave empty for
+                  email-only applications.
+                </p>
+                {questions.length > 0 && (
+                  <ul className="space-y-1.5">
+                    {questions.map((q, i) => (
+                      <li
+                        key={`${i}-${q}`}
+                        className="flex items-start gap-2 bg-white border border-amber-200 rounded-lg px-3 py-2"
+                        data-testid={`row-new-question-${i}`}
+                      >
+                        <span className="text-xs font-semibold text-amber-700 mt-0.5">
+                          Q{i + 1}
+                        </span>
+                        <span className="text-sm text-gray-800 flex-1 break-words">
+                          {q}
+                        </span>
+                        <button
+                          type="button"
+                          className="text-gray-400 hover:text-red-500"
+                          onClick={() =>
+                            setQuestions((prev) =>
+                              prev.filter((_, idx) => idx !== i),
+                            )
+                          }
+                          aria-label="Remove question"
+                          data-testid={`button-remove-new-question-${i}`}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    value={questionDraft}
+                    onChange={(e) => setQuestionDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addQuestion();
+                      }
+                    }}
+                    placeholder="e.g. What is your experience with live sound?"
+                    className="bg-white border-amber-200 text-black"
+                    data-testid="input-new-question"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                    onClick={addQuestion}
+                    disabled={!questionDraft.trim()}
+                    data-testid="button-add-new-question"
+                  >
+                    Add
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end">
             <Button
               className="bg-[#c084fc] hover:bg-[#a855f7] text-white shadow-sm"
@@ -660,21 +814,21 @@ function PostsTab() {
                             onValueChange={(v) => setEditType(v)}
                           >
                             <SelectTrigger
-                              className="bg-gray-50 border-gray-200 h-9 w-full sm:w-[260px]"
+                              className="bg-gray-50 border-gray-200 h-9 w-full sm:w-[260px] text-black"
                               data-testid={`select-edit-post-type-${p.id}`}
                             >
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               {POST_TYPES.map((t) => (
-                                <SelectItem key={t} value={t}>
+                                <SelectItem key={t} value={t} className="text-black">
                                   {POST_TYPE_LABEL[t]}
                                 </SelectItem>
                               ))}
                               {!(POST_TYPES as readonly string[]).includes(
                                 editType,
                               ) && (
-                                <SelectItem value={editType}>
+                                <SelectItem value={editType} className="text-black">
                                   {editType} (legacy)
                                 </SelectItem>
                               )}
@@ -684,9 +838,86 @@ function PostsTab() {
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
                             rows={4}
-                            className="bg-gray-50 border-gray-200 focus:border-[#c084fc] focus:ring-[#c084fc]/30 resize-none"
+                            className="bg-gray-50 border-gray-200 focus:border-[#c084fc] focus:ring-[#c084fc]/30 resize-none text-black"
                             data-testid={`textarea-edit-post-content-${p.id}`}
                           />
+                          {editType === "opportunity" && (
+                            <div className="rounded-lg border border-amber-200 bg-amber-50/40 p-3 space-y-3">
+                              <div className="flex items-center justify-between gap-3">
+                                <Label className="text-gray-800 font-semibold text-sm">
+                                  Paid opportunity
+                                </Label>
+                                <Switch
+                                  checked={editIsPaid}
+                                  onCheckedChange={setEditIsPaid}
+                                  data-testid={`switch-edit-post-paid-${p.id}`}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-gray-800 font-semibold text-sm">
+                                  Application questions
+                                </Label>
+                                {editQuestions.length > 0 && (
+                                  <ul className="space-y-1.5">
+                                    {editQuestions.map((q, i) => (
+                                      <li
+                                        key={`${i}-${q}`}
+                                        className="flex items-start gap-2 bg-white border border-amber-200 rounded-md px-2.5 py-1.5"
+                                      >
+                                        <span className="text-[10px] font-semibold text-amber-700 mt-0.5">
+                                          Q{i + 1}
+                                        </span>
+                                        <span className="text-xs text-gray-800 flex-1 break-words">
+                                          {q}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          className="text-gray-400 hover:text-red-500"
+                                          onClick={() =>
+                                            setEditQuestions((prev) =>
+                                              prev.filter((_, idx) => idx !== i),
+                                            )
+                                          }
+                                          aria-label="Remove question"
+                                          data-testid={`button-remove-edit-question-${p.id}-${i}`}
+                                        >
+                                          <X className="w-3.5 h-3.5" />
+                                        </button>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                                <div className="flex gap-2">
+                                  <Input
+                                    value={editQuestionDraft}
+                                    onChange={(e) =>
+                                      setEditQuestionDraft(e.target.value)
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        addEditQuestion();
+                                      }
+                                    }}
+                                    placeholder="Add a question..."
+                                    className="bg-white border-amber-200 text-black h-8 text-sm"
+                                    data-testid={`input-edit-question-${p.id}`}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                                    onClick={addEditQuestion}
+                                    disabled={!editQuestionDraft.trim()}
+                                    data-testid={`button-add-edit-question-${p.id}`}
+                                  >
+                                    Add
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <p
@@ -712,6 +943,8 @@ function PostsTab() {
                                 id: p.id,
                                 content: editContent.trim(),
                                 type: editType,
+                                isPaid: editIsPaid,
+                                applicationQuestions: editQuestions,
                               })
                             }
                             title="Save changes"
