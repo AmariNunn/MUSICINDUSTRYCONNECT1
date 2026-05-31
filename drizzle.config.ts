@@ -1,15 +1,29 @@
 import { defineConfig } from "drizzle-kit";
 
-const rawUrl = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
+function getUrl(): string {
+  if (
+    process.env.PGHOST &&
+    process.env.PGUSER &&
+    process.env.PGPASSWORD &&
+    process.env.PGDATABASE
+  ) {
+    const port = process.env.PGPORT || "5432";
+    return `postgresql://${process.env.PGUSER}:${process.env.PGPASSWORD}@${process.env.PGHOST}:${port}/${process.env.PGDATABASE}?sslmode=require`;
+  }
 
-if (!rawUrl) {
-  throw new Error(
-    "SUPABASE_DATABASE_URL or DATABASE_URL must be set, ensure the database is provisioned",
-  );
+  const raw =
+    process.env.DATABASE_URL ||
+    process.env.SUPABASE_DATABASE_URL;
+
+  if (!raw) {
+    throw new Error(
+      "No database URL found. Set DATABASE_URL or provision a Replit PostgreSQL database.",
+    );
+  }
+
+  return raw;
 }
 
-// Supabase Transaction Pooler uses an intermediate self-signed CA. sslmode=no-verify
-// keeps TLS encryption while skipping chain verification (same as rejectUnauthorized:false).
 function normalizeUrl(url: string): string {
   const isSupabasePooler =
     url.includes("pooler.supabase.com") || url.includes(".pooler.supabase.co");
@@ -20,7 +34,7 @@ function normalizeUrl(url: string): string {
   return url + (url.includes("?") ? "&" : "?") + "sslmode=no-verify";
 }
 
-const url = normalizeUrl(rawUrl);
+const url = normalizeUrl(getUrl());
 
 export default defineConfig({
   out: "./migrations",
