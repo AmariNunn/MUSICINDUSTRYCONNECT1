@@ -17,7 +17,9 @@ export const users = pgTable("users", {
   bio: text("bio"),
   avatar: text("avatar").notNull().default(""),
   verified: boolean("verified").notNull().default(false),
-  memberLevel: text("member_level").notNull().default("Gold"), // Gold (Free) or Platinum (Paid)
+  memberLevel: text("member_level").notNull().default("Free"), // Free, Gold ($9/mo), or Platinum ($19/mo)
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
   isAdmin: boolean("is_admin").notNull().default(false),
   
   // Profile visibility settings
