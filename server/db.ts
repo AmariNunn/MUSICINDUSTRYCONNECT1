@@ -5,8 +5,12 @@ import * as schema from "@shared/schema";
 const { Pool } = pg;
 
 function getConnectionString(): string {
-  // Prefer Replit's always-available built-in PostgreSQL when its env vars are present.
-  // This avoids dependency on external services (e.g. Supabase) that may be paused.
+  // Use Supabase when configured
+  if (process.env.SUPABASE_DATABASE_URL) {
+    return process.env.SUPABASE_DATABASE_URL;
+  }
+
+  // Fall back to Replit built-in PostgreSQL
   if (
     process.env.PGHOST &&
     process.env.PGUSER &&
@@ -14,20 +18,15 @@ function getConnectionString(): string {
     process.env.PGDATABASE
   ) {
     const port = process.env.PGPORT || "5432";
-    return `postgresql://${process.env.PGUSER}:${process.env.PGPASSWORD}@${process.env.PGHOST}:${port}/${process.env.PGDATABASE}`;
+    return `postgresql://${process.env.PGUSER}:${process.env.PGPASSWORD}@${process.env.PGHOST}:${port}/${process.env.PGDATABASE}?sslmode=require`;
   }
 
   if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL;
   }
 
-  // Fall back to Supabase if no built-in DB is configured.
-  if (process.env.SUPABASE_DATABASE_URL) {
-    return process.env.SUPABASE_DATABASE_URL;
-  }
-
   throw new Error(
-    "Database connection not configured. Provision a Replit PostgreSQL database or set DATABASE_URL.",
+    "Database connection not configured. Set SUPABASE_DATABASE_URL or provision a Replit PostgreSQL database.",
   );
 }
 
