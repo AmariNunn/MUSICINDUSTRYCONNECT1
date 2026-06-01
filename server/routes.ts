@@ -172,8 +172,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const { memberLevel } = req.body ?? {};
-      if (memberLevel !== "Gold" && memberLevel !== "Platinum") {
-        return res.status(400).json({ message: "memberLevel must be Gold or Platinum" });
+      if (memberLevel !== "Free" && memberLevel !== "Gold" && memberLevel !== "Platinum") {
+        return res.status(400).json({ message: "memberLevel must be Free, Gold, or Platinum" });
       }
       const updated = await storage.updateUser(id, { memberLevel });
       if (!updated) return res.status(404).json({ message: "User not found" });

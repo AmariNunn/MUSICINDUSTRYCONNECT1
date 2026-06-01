@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import UpgradeModal from "@/components/upgrade-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,7 @@ export default function AccountSettings() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("personal");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [expandedLegalSections, setExpandedLegalSections] = useState<{[key: string]: boolean}>({
     userAgreement: false,
     privacyPolicy: false,
@@ -478,6 +480,13 @@ export default function AccountSettings() {
           </TabsContent>
 
           <TabsContent value="membership">
+            {/* Upgrade Modal */}
+            <UpgradeModal
+              open={showUpgradeModal}
+              onClose={() => setShowUpgradeModal(false)}
+              currentPlan={currentUser?.memberLevel ?? "Free"}
+            />
+
             <Card className="bg-white border border-zinc-200 shadow-sm rounded-xl">
               <CardHeader className="border-b border-zinc-200 pb-4">
                 <CardTitle className="flex items-center gap-2 text-black">
@@ -486,39 +495,92 @@ export default function AccountSettings() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
-                <div className="p-6 bg-zinc-100 rounded-xl border border-zinc-300">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-[#c084fc] to-purple-600 rounded-full flex items-center justify-center">
-                        <Crown className="w-6 h-6 text-white" />
+                {/* Current plan summary */}
+                {(() => {
+                  const plan = currentUser?.memberLevel ?? "Free";
+                  const isPaid = plan === "Gold" || plan === "Platinum";
+                  const isPlatinum = plan === "Platinum";
+                  const accentColor = isPlatinum ? "from-[#c084fc] to-purple-600" : plan === "Gold" ? "from-yellow-400 to-amber-500" : "from-zinc-400 to-zinc-600";
+                  return (
+                    <div className={`p-6 rounded-xl border ${isPlatinum ? "bg-[#c084fc]/5 border-[#c084fc]/30" : plan === "Gold" ? "bg-yellow-400/5 border-yellow-400/30" : "bg-zinc-100 border-zinc-300"}`}>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-12 h-12 bg-gradient-to-br ${accentColor} rounded-full flex items-center justify-center`}>
+                            <Crown className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-bold text-black">{plan} Member</h3>
+                            <p className="text-sm text-zinc-500">
+                              {plan === "Free" ? "Free plan · No subscription" : plan === "Gold" ? "$9 / month" : "$19 / month"}
+                            </p>
+                          </div>
+                        </div>
+                        {plan !== "Platinum" && (
+                          <Button
+                            className="bg-[#c084fc] hover:bg-[#a855f7] text-white font-semibold"
+                            onClick={() => setShowUpgradeModal(true)}
+                            data-testid="button-upgrade"
+                          >
+                            {plan === "Free" ? "Upgrade Plan" : "Upgrade to Platinum"}
+                          </Button>
+                        )}
                       </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-black">Gold Member</h3>
-                        <p className="text-sm text-zinc-500">Free Plan</p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div className="p-3 bg-white/60 rounded-lg">
+                          <p className="text-2xl font-bold text-black">{plan}</p>
+                          <p className="text-xs text-zinc-500">Current Plan</p>
+                        </div>
+                        <div className="p-3 bg-white/60 rounded-lg">
+                          <p className="text-2xl font-bold text-black">{isPaid ? "Monthly" : "N/A"}</p>
+                          <p className="text-xs text-zinc-500">Billing</p>
+                        </div>
+                        <div className="p-3 bg-white/60 rounded-lg">
+                          <p className="text-2xl font-bold text-black">
+                            {currentUser?.createdAt
+                              ? Math.max(1, Math.floor((Date.now() - new Date(currentUser.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 30)))
+                              : "—"}
+                          </p>
+                          <p className="text-xs text-zinc-500">Months Active</p>
+                        </div>
+                        <div className="p-3 bg-white/60 rounded-lg">
+                          <p className="text-2xl font-bold text-green-500">Active</p>
+                          <p className="text-xs text-zinc-500">Status</p>
+                        </div>
                       </div>
                     </div>
-                    <Button className="bg-[#c084fc] hover:bg-[#a855f7] text-white font-semibold" data-testid="button-upgrade">
-                      Upgrade to Platinum
+                  );
+                })()}
+                
+                <Separator className="bg-zinc-200" />
+
+                {/* What's included */}
+                <div>
+                  <h3 className="font-semibold text-black mb-3">Your Plan Includes</h3>
+                  <ul className="space-y-2">
+                    {(currentUser?.memberLevel === "Platinum"
+                      ? ["Profile listing in directory", "Unlimited connections", "Community (Core) posting", "Priority directory placement", "Verified badge eligibility", "Exclusive platinum opportunities", "Featured profile highlight"]
+                      : currentUser?.memberLevel === "Gold"
+                      ? ["Profile listing in directory", "Unlimited connections", "Community (Core) posting", "Standard directory placement"]
+                      : ["Profile listing in directory", "Browse opportunities & events", "Up to 10 connections"]
+                    ).map((feature, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm text-zinc-700">
+                        <div className="w-4 h-4 rounded-full bg-[#c084fc]/15 flex items-center justify-center shrink-0">
+                          <Crown className="w-2.5 h-2.5 text-[#c084fc]" />
+                        </div>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  {(currentUser?.memberLevel ?? "Free") !== "Platinum" && (
+                    <Button
+                      variant="outline"
+                      className="mt-4 border-[#c084fc] text-[#c084fc] hover:bg-[#c084fc]/10"
+                      onClick={() => setShowUpgradeModal(true)}
+                      data-testid="button-view-all-plans"
+                    >
+                      View all plans & features
                     </Button>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                    <div className="p-3 bg-zinc-100 rounded-lg">
-                      <p className="text-2xl font-bold text-black">Free</p>
-                      <p className="text-xs text-zinc-500">Current Plan</p>
-                    </div>
-                    <div className="p-3 bg-zinc-100 rounded-lg">
-                      <p className="text-2xl font-bold text-black">N/A</p>
-                      <p className="text-xs text-zinc-500">Renewal Date</p>
-                    </div>
-                    <div className="p-3 bg-zinc-100 rounded-lg">
-                      <p className="text-2xl font-bold text-black">3</p>
-                      <p className="text-xs text-zinc-500">Months Active</p>
-                    </div>
-                    <div className="p-3 bg-zinc-100 rounded-lg">
-                      <p className="text-2xl font-bold text-green-400">Active</p>
-                      <p className="text-xs text-zinc-500">Status</p>
-                    </div>
-                  </div>
+                  )}
                 </div>
                 
                 <Separator className="bg-zinc-200" />
@@ -531,7 +593,12 @@ export default function AccountSettings() {
                   <div className="p-4 bg-zinc-50 rounded-lg text-center border border-zinc-200">
                     <CreditCard className="w-8 h-8 mx-auto mb-2 text-zinc-400" />
                     <p className="text-zinc-500">No payment methods on file</p>
-                    <Button variant="outline" className="mt-3 border-[#c084fc] text-[#c084fc] hover:bg-[#c084fc] hover:text-white" data-testid="button-add-payment">
+                    <Button
+                      variant="outline"
+                      className="mt-3 border-[#c084fc] text-[#c084fc] hover:bg-[#c084fc] hover:text-white"
+                      onClick={() => setShowUpgradeModal(true)}
+                      data-testid="button-add-payment"
+                    >
                       Add Payment Method
                     </Button>
                   </div>
@@ -554,10 +621,15 @@ export default function AccountSettings() {
                     <AlertTriangle className="w-5 h-5 text-orange-400 mt-0.5" />
                     <div>
                       <p className="font-medium text-black">Cancel Membership</p>
-                      <p className="text-sm text-zinc-500 mb-3">You are currently on the free Gold plan. If you upgrade to Platinum, you can cancel your subscription here at any time.</p>
+                      <p className="text-sm text-zinc-500 mb-3">
+                        {(currentUser?.memberLevel ?? "Free") === "Free"
+                          ? "You are on the free plan. Upgrade to Gold or Platinum to unlock more features."
+                          : "You can cancel your paid subscription here at any time. You'll keep access until the end of your billing period."}
+                      </p>
                       <Button 
                         variant="outline" 
-                        className="border-[#c084fc] text-[#c084fc] hover:bg-[#c084fc] hover:text-white"
+                        className="border-red-400 text-red-500 hover:bg-red-500 hover:text-white"
+                        disabled={(currentUser?.memberLevel ?? "Free") === "Free"}
                         data-testid="button-cancel-membership"
                       >
                         Cancel Membership

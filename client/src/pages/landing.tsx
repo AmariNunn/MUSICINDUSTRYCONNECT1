@@ -22,7 +22,11 @@ import {
   LogIn,
   UserPlus,
   TrendingUp,
-  Globe
+  Globe,
+  Crown,
+  Check,
+  X,
+  Zap
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -71,6 +75,69 @@ export default function LandingPage() {
     }
   ];
 
+  const plans = [
+    {
+      name: "Free",
+      price: "$0",
+      period: "forever",
+      badge: null,
+      description: "Everything you need to get started in the music industry.",
+      accentColor: "border-gray-700",
+      badgeBg: null,
+      buttonClass: "bg-white text-black hover:bg-gray-100 border border-gray-300",
+      features: [
+        { text: "Profile listing in directory", included: true },
+        { text: "Browse opportunities & events", included: true },
+        { text: "Up to 10 connections", included: true },
+        { text: "Basic profile customization", included: true },
+        { text: "Community (Core) posting", included: false },
+        { text: "Unlimited connections", included: false },
+        { text: "Priority directory placement", included: false },
+        { text: "Exclusive opportunities", included: false },
+      ],
+    },
+    {
+      name: "Gold",
+      price: "$9",
+      period: "per month",
+      badge: "Most Popular",
+      description: "Unlock the full power of networking and community.",
+      accentColor: "border-yellow-400",
+      badgeBg: "bg-yellow-400 text-black",
+      buttonClass: "bg-yellow-400 hover:bg-yellow-300 text-black font-bold",
+      features: [
+        { text: "Everything in Free", included: true },
+        { text: "Unlimited connections", included: true },
+        { text: "Community (Core) posting", included: true },
+        { text: "Standard directory placement", included: true },
+        { text: "Advanced profile customization", included: true },
+        { text: "Priority directory placement", included: false },
+        { text: "Verified badge eligibility", included: false },
+        { text: "Exclusive platinum opportunities", included: false },
+      ],
+    },
+    {
+      name: "Platinum",
+      price: "$19",
+      period: "per month",
+      badge: "Best Value",
+      description: "The ultimate membership for serious industry professionals.",
+      accentColor: "border-[#c084fc]",
+      badgeBg: "bg-[#c084fc] text-white",
+      buttonClass: "bg-[#c084fc] hover:bg-[#a855f7] text-white font-bold",
+      features: [
+        { text: "Everything in Gold", included: true },
+        { text: "Priority directory placement", included: true },
+        { text: "Verified badge eligibility", included: true },
+        { text: "Exclusive platinum opportunities", included: true },
+        { text: "Featured profile highlight", included: true },
+        { text: "Early access to new features", included: true },
+        { text: "Dedicated support", included: true },
+        { text: "Analytics & profile insights", included: true },
+      ],
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
@@ -85,7 +152,12 @@ export default function LandingPage() {
               />
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <a href="#pricing">
+                <Button variant="ghost" className="text-white hover:bg-white/20 font-medium hidden sm:flex">
+                  Pricing
+                </Button>
+              </a>
               <Link href="/login">
                 <Button className="bg-white text-[#c084fc] hover:bg-gray-100 font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg">
                   <LogIn className="w-4 h-4 mr-2" />
@@ -102,6 +174,7 @@ export default function LandingPage() {
           </div>
         </div>
       </header>
+
       {/* Hero Section */}
       <section className="bg-black text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -120,6 +193,12 @@ export default function LandingPage() {
                 Get Started Free
               </Button>
             </Link>
+            <a href="#pricing">
+              <Button size="lg" variant="outline" className="border-[#c084fc] text-[#c084fc] hover:bg-[#c084fc]/10 font-medium text-lg px-8 py-4">
+                <Crown className="w-5 h-5 mr-2" />
+                View Plans
+              </Button>
+            </a>
           </div>
 
           {/* Quick Stats */}
@@ -133,6 +212,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
       {/* Features Section */}
       <section className="py-12 sm:py-16 lg:py-20 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -164,6 +244,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
       {/* Testimonials Section */}
       <section className="py-20 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -189,6 +270,106 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 bg-zinc-950 border-t border-zinc-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 bg-[#c084fc]/10 border border-[#c084fc]/30 rounded-full px-4 py-1.5 text-[#c084fc] text-sm font-medium mb-4">
+              <Crown className="w-4 h-4" />
+              Membership Plans
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+              Choose Your Membership
+            </h2>
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+              Start free and upgrade anytime. Every plan gives you access to the MIC community of music professionals.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+            {plans.map((plan, index) => {
+              const isPlatinum = plan.name === "Platinum";
+              return (
+                <div
+                  key={index}
+                  className={`relative flex flex-col rounded-2xl border-2 ${plan.accentColor} ${
+                    isPlatinum
+                      ? "bg-gradient-to-b from-[#c084fc]/10 to-zinc-900 shadow-2xl shadow-[#c084fc]/20 scale-[1.02]"
+                      : "bg-zinc-900"
+                  } p-8 transition-transform duration-300 hover:-translate-y-1`}
+                  data-testid={`card-plan-${plan.name.toLowerCase()}`}
+                >
+                  {/* Badge */}
+                  {plan.badge && (
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${plan.badgeBg}`}>
+                        <Zap className="w-3 h-3" />
+                        {plan.badge}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Plan name + icon */}
+                  <div className="flex items-center gap-2 mb-2">
+                    {isPlatinum && <Crown className="w-5 h-5 text-[#c084fc]" />}
+                    {plan.name === "Gold" && <Star className="w-5 h-5 text-yellow-400" />}
+                    <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+                  </div>
+
+                  {/* Price */}
+                  <div className="mb-3">
+                    <span className="text-5xl font-extrabold text-white">{plan.price}</span>
+                    <span className="text-gray-400 ml-2 text-sm">/{plan.period}</span>
+                  </div>
+
+                  <p className="text-gray-400 text-sm mb-6">{plan.description}</p>
+
+                  {/* CTA */}
+                  <Link href="/join" className="mb-8">
+                    <Button className={`w-full py-3 rounded-xl text-base ${plan.buttonClass}`} data-testid={`button-plan-${plan.name.toLowerCase()}`}>
+                      {plan.name === "Free" ? "Get Started Free" : `Start ${plan.name}`}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+
+                  {/* Divider */}
+                  <div className="border-t border-zinc-700 mb-6" />
+
+                  {/* Features */}
+                  <ul className="space-y-3 flex-1">
+                    {plan.features.map((feature, fi) => (
+                      <li key={fi} className="flex items-start gap-3">
+                        {feature.included ? (
+                          <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                            isPlatinum ? "bg-[#c084fc]/20" : plan.name === "Gold" ? "bg-yellow-400/20" : "bg-gray-700"
+                          }`}>
+                            <Check className={`w-3 h-3 ${
+                              isPlatinum ? "text-[#c084fc]" : plan.name === "Gold" ? "text-yellow-400" : "text-gray-300"
+                            }`} />
+                          </div>
+                        ) : (
+                          <div className="mt-0.5 w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">
+                            <X className="w-3 h-3 text-zinc-600" />
+                          </div>
+                        )}
+                        <span className={`text-sm ${feature.included ? "text-gray-200" : "text-zinc-600"}`}>
+                          {feature.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="text-center text-gray-500 text-sm mt-10">
+            All plans include a 7-day free trial. Cancel anytime. No contracts.
+          </p>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-[#c084fc] to-[#c084fc]/80 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -225,6 +406,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
       {/* Footer */}
       <footer className="bg-black text-white py-12 border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

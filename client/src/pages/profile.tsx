@@ -392,7 +392,7 @@ export default function ProfilePage() {
     if (!newPostContent.trim() && !newPostImage) return;
     
     // Check if user is Platinum member - post to Core page
-    if (currentUser?.memberLevel === "Platinum") {
+    if (currentUser?.memberLevel === "Gold" || currentUser?.memberLevel === "Platinum") {
       try {
         await apiRequest("POST", "/api/posts", { 
           userId: currentUser.id,
