@@ -428,8 +428,6 @@ export default function LandingPage() {
             <div>
               <h4 className="font-bold mb-4">Platform</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="/directory" className="hover:text-white">Directory</Link></li>
-                <li><Link href="/core" className="hover:text-white">Community</Link></li>
                 <li><Link href="/join" className="hover:text-white">Join</Link></li>
               </ul>
             </div>
