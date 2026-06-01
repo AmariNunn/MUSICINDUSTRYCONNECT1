@@ -154,7 +154,7 @@ export default function LandingPage() {
             
             <div className="flex items-center space-x-2 sm:space-x-4">
               <a href="#pricing">
-                <Button variant="ghost" className="text-white hover:bg-white/20 font-medium hidden sm:flex">
+                <Button className="bg-white text-[#c084fc] hover:bg-gray-100 font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg hidden sm:flex">
                   Pricing
                 </Button>
               </a>
