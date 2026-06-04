@@ -42,14 +42,14 @@ export default function LandingPage() {
       description: "Discover gigs, collaborations, and career opportunities tailored to your music journey."
     },
     {
-      image: eventsLogo,
-      title: "Events",
-      description: "Join exclusive music industry events, workshops, and networking sessions to grow your career."
-    },
-    {
       image: resourcesLogo,
       title: "Resources",
       description: "Access valuable tools, guides, and educational content to elevate your music skills."
+    },
+    {
+      image: eventsLogo,
+      title: "Events",
+      description: "Join exclusive music industry events, workshops, and networking sessions to grow your career."
     }
   ];
 
