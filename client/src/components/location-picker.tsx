@@ -74,7 +74,7 @@ export function LocationPicker({ value, onChange, placeholder = "Select your loc
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between border-purple-200 focus:border-purple-400 focus:ring-purple-200 bg-white rounded-xl text-left font-normal h-auto py-3",
+            "w-full justify-between border-purple-200 focus:border-purple-400 focus:ring-purple-200 bg-white hover:bg-white hover:text-gray-900 rounded-xl text-left font-normal h-auto py-3",
             !value && "text-gray-400",
             value && "text-gray-900",
             className
@@ -87,23 +87,23 @@ export function LocationPicker({ value, onChange, placeholder = "Select your loc
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-gray-400" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0 max-w-[400px]" align="start">
-        <Command shouldFilter={false}>
+      <PopoverContent className="w-full p-0 max-w-[400px] bg-white border border-purple-100 shadow-lg" align="start">
+        <Command shouldFilter={false} className="bg-white">
           <CommandInput 
             placeholder="Type to search cities..." 
             value={search}
             onValueChange={setSearch}
-            className="border-0"
+            className="border-0 bg-white"
           />
-          <CommandList>
+          <CommandList className="bg-white">
             {search.length < 2 ? (
               <CommandEmpty className="py-6 text-center text-sm text-gray-500">
                 Type at least 2 characters to search...
               </CommandEmpty>
             ) : filteredCities.length === 0 ? (
-              <CommandEmpty>No cities found.</CommandEmpty>
+              <CommandEmpty className="text-gray-500">No cities found.</CommandEmpty>
             ) : (
-              <CommandGroup className="max-h-[300px] overflow-auto">
+              <CommandGroup className="max-h-[300px] overflow-auto bg-white">
                 {filteredCities.map((city, index) => {
                   const locationString = formatLocation(city);
                   return (
@@ -115,7 +115,7 @@ export function LocationPicker({ value, onChange, placeholder = "Select your loc
                         setOpen(false);
                         setSearch("");
                       }}
-                      className="cursor-pointer"
+                      className="cursor-pointer bg-white hover:bg-[#c084fc]/10 aria-selected:bg-[#c084fc]/10 text-gray-900"
                     >
                       <Check
                         className={cn(
