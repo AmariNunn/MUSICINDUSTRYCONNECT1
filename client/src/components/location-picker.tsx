@@ -41,9 +41,9 @@ export function LocationPicker({ value, onChange, placeholder = "Select your loc
     const searchLower = search.toLowerCase();
     return cities
       .filter(city => 
-        city.city.toLowerCase().includes(searchLower) ||
-        city.state.toLowerCase().includes(searchLower) ||
-        city.country.toLowerCase().includes(searchLower)
+        city.city?.toLowerCase().includes(searchLower) ||
+        city.state?.toLowerCase().includes(searchLower) ||
+        city.country?.toLowerCase().includes(searchLower)
       )
       .slice(0, 100);
   }, [search]);
