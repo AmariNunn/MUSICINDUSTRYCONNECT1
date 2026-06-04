@@ -297,7 +297,7 @@ export default function JoinPage() {
                       control={form.control}
                       name="confirmPassword"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex flex-col justify-end h-full">
                           <FormLabel className="text-gray-700 font-semibold">Confirm Password *</FormLabel>
                           <FormControl>
                             <Input 
@@ -307,6 +307,7 @@ export default function JoinPage() {
                               className="bg-[#c084fc]/5 border-[#c084fc]/20 focus:border-[#c084fc] rounded-md"
                             />
                           </FormControl>
+                          <FormDescription className="invisible select-none" aria-hidden="true">Minimum 8 characters</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
