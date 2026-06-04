@@ -17,13 +17,24 @@ import {
 } from "@/components/ui/popover";
 import citiesData from "@/data/cities.json";
 
+interface CityRaw {
+  c: string;
+  s?: string;
+  n: string;
+  i?: string;
+}
+
 interface City {
   city: string;
   state: string;
   country: string;
 }
 
-const cities = citiesData as City[];
+const cities: City[] = (citiesData as CityRaw[]).map(d => ({
+  city: d.c,
+  state: d.s ?? "",
+  country: d.n,
+}));
 
 interface LocationPickerProps {
   value: string;
