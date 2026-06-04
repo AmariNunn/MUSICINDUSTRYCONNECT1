@@ -93,7 +93,7 @@ export function LocationPicker({ value, onChange, placeholder = "Select your loc
             placeholder="Type to search cities..." 
             value={search}
             onValueChange={setSearch}
-            className="border-0 bg-white"
+            className="border-0 bg-white text-[#000000]"
           />
           <CommandList className="bg-white">
             {search.length < 2 ? (
