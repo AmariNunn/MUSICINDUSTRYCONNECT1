@@ -75,8 +75,8 @@ export function LocationPicker({ value, onChange, placeholder = "Select your loc
           aria-expanded={open}
           className={cn(
             "w-full justify-between border-purple-200 focus:border-purple-400 focus:ring-purple-200 bg-white hover:bg-white hover:text-gray-900 rounded-xl text-left font-normal h-auto py-3",
-            !value && "text-gray-400",
-            value && "text-gray-900",
+            !value && "text-black",
+            value && "text-black",
             className
           )}
         >
