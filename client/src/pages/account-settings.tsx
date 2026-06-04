@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import UpgradeModal from "@/components/upgrade-modal";
+import { LocationPicker } from "@/components/location-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -260,17 +261,14 @@ export default function AccountSettings() {
                   </div>
                   
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="address" className="flex items-center gap-2 text-zinc-600">
+                    <Label className="flex items-center gap-2 text-zinc-600">
                       <Globe className="w-4 h-4 text-zinc-500" />
-                      Address (Optional - for billing)
+                      Location
                     </Label>
-                    <Input
-                      id="address"
+                    <LocationPicker
                       value={personalInfo.address}
-                      onChange={(e) => setPersonalInfo({...personalInfo, address: e.target.value})}
-                      placeholder="Enter your billing address"
-                      className="bg-zinc-50 border-zinc-200 text-black placeholder:text-zinc-400 focus:border-[#c084fc] focus:ring-[#c084fc]"
-                      data-testid="input-address"
+                      onChange={(val) => setPersonalInfo({...personalInfo, address: val})}
+                      placeholder="Search for your city..."
                     />
                   </div>
                 </div>
