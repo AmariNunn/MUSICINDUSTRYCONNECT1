@@ -20,9 +20,13 @@ import { z } from "zod";
 import { getGenreBadge, getProfessionBadge } from "@/lib/badges";
 
 const registrationSchema = insertUserSchema.extend({
+  confirmPassword: z.string().min(1, "Please confirm your password"),
   terms: z.boolean().refine(val => val === true, {
     message: "You must accept the terms and conditions",
   }),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 type RegistrationFormData = z.infer<typeof registrationSchema>;
@@ -50,6 +54,7 @@ export default function JoinPage() {
       email: "",
       phone: "",
       password: "",
+      confirmPassword: "",
       profession: [],
       genre: [],
       location: "",
@@ -65,7 +70,7 @@ export default function JoinPage() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegistrationFormData) => {
-      const { terms, ...userData } = data;
+      const { terms, confirmPassword: _, ...userData } = data;
       return apiRequest("POST", "/api/users", userData);
     },
     onSuccess: () => {
@@ -283,6 +288,25 @@ export default function JoinPage() {
                             />
                           </FormControl>
                           <FormDescription className="text-[#c084fc]">Minimum 8 characters</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-semibold">Confirm Password *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="password" 
+                              placeholder="Re-enter your password" 
+                              {...field} 
+                              className="bg-[#c084fc]/5 border-[#c084fc]/20 focus:border-[#c084fc] rounded-md"
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
