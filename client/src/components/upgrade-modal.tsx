@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import {
   Check,
   X,
@@ -18,72 +19,49 @@ interface UpgradeModalProps {
   currentPlan?: string;
 }
 
-const plans = [
+interface StripePlan {
+  name: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  period: string;
+  features: string[];
+  stripePriceId?: string | null;
+}
+
+const PLAN_META: Record<
+  string,
   {
-    name: "Free",
-    price: "$0",
-    period: "forever",
+    badge: string | null;
+    badgeBg?: string;
+    accentBorder: string;
+    checkColor: string;
+    checkBg: string;
+    buttonClass?: string;
+  }
+> = {
+  Free: {
     badge: null,
-    description: "Everything you need to get started.",
-    features: [
-      { text: "Profile listing in directory", included: true },
-      { text: "Browse opportunities & events", included: true },
-      { text: "Up to 10 connections", included: true },
-      { text: "Community (Core) posting", included: false },
-      { text: "Unlimited connections", included: false },
-      { text: "Priority directory placement", included: false },
-      { text: "Exclusive opportunities", included: false },
-    ],
-    ctaText: "Current Plan",
     accentBorder: "border-zinc-700",
     checkColor: "text-zinc-400",
     checkBg: "bg-zinc-800",
   },
-  {
-    name: "Gold",
-    price: "$9",
-    period: "/ month",
+  Gold: {
     badge: "Most Popular",
     badgeBg: "bg-yellow-400 text-black",
-    description: "Full community access and unlimited networking.",
-    features: [
-      { text: "Everything in Free", included: true },
-      { text: "Unlimited connections", included: true },
-      { text: "Community (Core) posting", included: true },
-      { text: "Standard directory placement", included: true },
-      { text: "Advanced profile customization", included: true },
-      { text: "Priority directory placement", included: false },
-      { text: "Exclusive platinum opportunities", included: false },
-    ],
-    ctaText: "Upgrade to Gold",
     accentBorder: "border-yellow-400",
     checkColor: "text-yellow-400",
     checkBg: "bg-yellow-400/15",
     buttonClass: "bg-yellow-400 hover:bg-yellow-300 text-black font-bold",
   },
-  {
-    name: "Platinum",
-    price: "$19",
-    period: "/ month",
+  Platinum: {
     badge: "Best Value",
     badgeBg: "bg-[#c084fc] text-white",
-    description: "The ultimate membership for industry pros.",
-    features: [
-      { text: "Everything in Gold", included: true },
-      { text: "Priority directory placement", included: true },
-      { text: "Verified badge eligibility", included: true },
-      { text: "Exclusive platinum opportunities", included: true },
-      { text: "Featured profile highlight", included: true },
-      { text: "Early access to new features", included: true },
-      { text: "Dedicated support", included: true },
-    ],
-    ctaText: "Upgrade to Platinum",
     accentBorder: "border-[#c084fc]",
     checkColor: "text-[#c084fc]",
     checkBg: "bg-[#c084fc]/15",
     buttonClass: "bg-[#c084fc] hover:bg-[#a855f7] text-white font-bold",
   },
-];
+};
 
 export default function UpgradeModal({
   open,
@@ -92,6 +70,12 @@ export default function UpgradeModal({
 }: UpgradeModalProps) {
   const { toast } = useToast();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+
+  const { data: plans = [] } = useQuery<StripePlan[]>({
+    queryKey: ["/api/stripe/plans"],
+    enabled: open,
+  });
 
   if (!open) return null;
 
@@ -105,21 +89,23 @@ export default function UpgradeModal({
           "Content-Type": "application/json",
           ...(userId ? { "x-user-id": userId } : {}),
         },
-        body: JSON.stringify({ plan: planName }),
+        body: JSON.stringify({ plan: planName, billingCycle }),
       });
       const data = await res.json();
       if (!res.ok) {
         toast({
           title: "Stripe not available",
-          description: data.message ?? "Could not start checkout. Please try again later.",
+          description:
+            data.message ?? "Could not start checkout. Please try again later.",
           variant: "destructive",
         });
         return;
       }
       if (data.url) {
-        window.location.href = data.url;
+        window.open(data.url, "_blank", "noopener,noreferrer");
+        onClose();
       }
-    } catch (err: any) {
+    } catch {
       toast({
         title: "Something went wrong",
         description: "Could not connect to the payment service. Please try again.",
@@ -129,6 +115,51 @@ export default function UpgradeModal({
       setLoadingPlan(null);
     }
   };
+
+  const displayPlans: StripePlan[] =
+    plans.length > 0
+      ? plans
+      : [
+          {
+            name: "Free",
+            monthlyPrice: 0,
+            annualPrice: 0,
+            period: "forever",
+            features: [
+              "Profile listing in directory",
+              "Browse opportunities & events",
+              "Up to 10 connections",
+            ],
+          },
+          {
+            name: "Gold",
+            monthlyPrice: 9,
+            annualPrice: 7,
+            period: "month",
+            features: [
+              "Everything in Free",
+              "Unlimited connections",
+              "Community (Core) posting",
+              "Standard directory placement",
+              "Advanced profile customization",
+            ],
+          },
+          {
+            name: "Platinum",
+            monthlyPrice: 19,
+            annualPrice: 15,
+            period: "month",
+            features: [
+              "Everything in Gold",
+              "Priority directory placement",
+              "Verified badge eligibility",
+              "Exclusive platinum opportunities",
+              "Featured profile highlight",
+              "Early access to new features",
+              "Dedicated support",
+            ],
+          },
+        ];
 
   return (
     <div
@@ -160,22 +191,64 @@ export default function UpgradeModal({
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
             Choose Your Plan
           </h2>
-          <p className="text-zinc-400 text-base max-w-xl mx-auto">
+          <p className="text-zinc-400 text-base max-w-xl mx-auto mb-6">
             Unlock more features and grow your music career. Cancel anytime.
           </p>
+
+          {/* Monthly / Annual toggle */}
+          <div className="inline-flex items-center bg-zinc-900 border border-zinc-700 rounded-full p-1 gap-1">
+            <button
+              onClick={() => setBillingCycle("monthly")}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                billingCycle === "monthly"
+                  ? "bg-white text-black"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+              data-testid="toggle-billing-monthly"
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingCycle("annual")}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
+                billingCycle === "annual"
+                  ? "bg-white text-black"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+              data-testid="toggle-billing-annual"
+            >
+              Annual
+              <span className="text-xs bg-green-500 text-white px-1.5 py-0.5 rounded-full font-bold">
+                Save ~20%
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Plan cards */}
         <div className="px-6 pb-10 grid grid-cols-1 md:grid-cols-3 gap-5">
-          {plans.map((plan) => {
+          {displayPlans.map((plan) => {
+            const meta = PLAN_META[plan.name] ?? PLAN_META.Free;
             const isCurrent = currentPlan === plan.name;
             const isPlatinum = plan.name === "Platinum";
             const isLoading = loadingPlan === plan.name;
+            const displayPrice =
+              plan.name === "Free"
+                ? "$0"
+                : billingCycle === "annual"
+                ? `$${plan.annualPrice}`
+                : `$${plan.monthlyPrice}`;
+            const periodLabel =
+              plan.name === "Free"
+                ? "forever"
+                : billingCycle === "annual"
+                ? "/ mo, billed annually"
+                : "/ month";
 
             return (
               <div
                 key={plan.name}
-                className={`relative flex flex-col rounded-2xl border-2 ${plan.accentBorder} p-6 transition-all duration-200 ${
+                className={`relative flex flex-col rounded-2xl border-2 ${meta.accentBorder} p-6 transition-all duration-200 ${
                   isPlatinum
                     ? "bg-gradient-to-b from-[#c084fc]/10 to-zinc-900 shadow-xl shadow-[#c084fc]/15"
                     : "bg-zinc-900"
@@ -183,13 +256,13 @@ export default function UpgradeModal({
                 data-testid={`card-upgrade-${plan.name.toLowerCase()}`}
               >
                 {/* Badge */}
-                {plan.badge && (
+                {meta.badge && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <span
-                      className={`inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-bold ${(plan as any).badgeBg}`}
+                      className={`inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-bold ${meta.badgeBg}`}
                     >
                       <Zap className="w-3 h-3" />
-                      {plan.badge}
+                      {meta.badge}
                     </span>
                   </div>
                 )}
@@ -212,29 +285,28 @@ export default function UpgradeModal({
 
                 {/* Price */}
                 <div className="mb-1">
-                  <span className="text-4xl font-extrabold text-white">{plan.price}</span>
-                  <span className="text-zinc-500 text-sm ml-1">{plan.period}</span>
+                  <span className="text-4xl font-extrabold text-white">{displayPrice}</span>
+                  <span className="text-zinc-500 text-sm ml-1">{periodLabel}</span>
                 </div>
-                <p className="text-zinc-500 text-xs mb-5">{plan.description}</p>
 
                 {/* CTA */}
                 {isCurrent ? (
                   <button
                     disabled
-                    className="w-full py-2.5 rounded-xl text-sm font-semibold bg-zinc-800 text-zinc-500 cursor-not-allowed mb-5"
+                    className="w-full py-2.5 rounded-xl text-sm font-semibold bg-zinc-800 text-zinc-500 cursor-not-allowed mb-5 mt-4"
                   >
                     Current Plan
                   </button>
                 ) : plan.name === "Free" ? (
                   <button
                     onClick={onClose}
-                    className="w-full py-2.5 rounded-xl text-sm font-semibold border border-zinc-600 text-zinc-400 hover:border-zinc-400 hover:text-white transition-colors mb-5"
+                    className="w-full py-2.5 rounded-xl text-sm font-semibold border border-zinc-600 text-zinc-400 hover:border-zinc-400 hover:text-white transition-colors mb-5 mt-4"
                   >
                     Stay on Free
                   </button>
                 ) : (
                   <Button
-                    className={`w-full py-2.5 rounded-xl text-sm ${(plan as any).buttonClass} mb-5`}
+                    className={`w-full py-2.5 rounded-xl text-sm ${meta.buttonClass} mb-5 mt-4`}
                     onClick={() => handleUpgrade(plan.name)}
                     disabled={isLoading || loadingPlan !== null}
                     data-testid={`button-upgrade-${plan.name.toLowerCase()}`}
@@ -246,7 +318,7 @@ export default function UpgradeModal({
                       </>
                     ) : (
                       <>
-                        {plan.ctaText}
+                        Upgrade to {plan.name}
                         <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                       </>
                     )}
@@ -260,23 +332,13 @@ export default function UpgradeModal({
                 <ul className="space-y-2.5 flex-1">
                   {plan.features.map((feature, fi) => (
                     <li key={fi} className="flex items-start gap-2.5">
-                      {feature.included ? (
-                        <div
-                          className={`mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${plan.checkBg}`}
-                        >
-                          <Check className={`w-2.5 h-2.5 ${plan.checkColor}`} />
-                        </div>
-                      ) : (
-                        <div className="mt-0.5 w-4 h-4 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">
-                          <X className="w-2.5 h-2.5 text-zinc-600" />
-                        </div>
-                      )}
-                      <span
-                        className={`text-xs leading-relaxed ${
-                          feature.included ? "text-zinc-300" : "text-zinc-600"
-                        }`}
+                      <div
+                        className={`mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${meta.checkBg}`}
                       >
-                        {feature.text}
+                        <Check className={`w-2.5 h-2.5 ${meta.checkColor}`} />
+                      </div>
+                      <span className="text-xs leading-relaxed text-zinc-300">
+                        {feature}
                       </span>
                     </li>
                   ))}
@@ -287,7 +349,7 @@ export default function UpgradeModal({
         </div>
 
         <p className="text-center text-zinc-600 text-xs pb-6">
-          7-day free trial on paid plans · No contracts · Cancel anytime
+          All paid plans include a 7-day free trial · No contracts · Cancel anytime
         </p>
       </div>
     </div>

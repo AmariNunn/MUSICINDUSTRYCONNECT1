@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
+import { useUpgradeModal } from "@/hooks/use-upgrade-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +60,7 @@ export default function ProfilePage() {
   const [isMobile, setIsMobile] = useState(false);
   const [connectionsModalType, setConnectionsModalType] = useState<null | "connections" | "connected">(null);
   const { toast } = useToast();
+  const { openUpgradeModal } = useUpgradeModal();
 
   // Redirect to login if not logged in (for /home route without userSlug)
   const loggedInUserId = localStorage.getItem('currentUserId');
@@ -458,18 +460,8 @@ export default function ProfilePage() {
         });
       }
     } else {
-      // Regular members - only local profile posts
-      const newPost = {
-        id: Date.now(),
-        content: newPostContent.trim(),
-        image: newPostImage,
-        timestamp: new Date()
-      };
-      
-      setPosts([newPost, ...posts]);
-      setNewPostContent("");
-      setNewPostImage(null);
-      toast({ title: "Posted!", description: "Your note has been shared." });
+      // Free users cannot post — show upgrade modal
+      openUpgradeModal();
     }
   };
 

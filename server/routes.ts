@@ -928,45 +928,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ─── Stripe Routes ──────────────────────────────────────────────────────────
 
-  app.get("/api/stripe/plans", (_req, res) => {
-    res.json([
-      {
-        name: "Free",
-        price: 0,
-        period: "forever",
-        features: [
-          "Profile listing in directory",
-          "Browse opportunities & events",
-          "Up to 10 connections",
-        ],
-      },
-      {
-        name: "Gold",
-        price: 9,
-        period: "month",
-        features: [
-          "Everything in Free",
-          "Unlimited connections",
-          "Community (Core) posting",
-          "Standard directory placement",
-          "Advanced profile customization",
-        ],
-      },
-      {
-        name: "Platinum",
-        price: 19,
-        period: "month",
-        features: [
-          "Everything in Gold",
-          "Priority directory placement",
-          "Verified badge eligibility",
-          "Exclusive platinum opportunities",
-          "Featured profile highlight",
-          "Early access to new features",
-          "Dedicated support",
-        ],
-      },
-    ]);
+  const STATIC_PLANS = [
+    {
+      name: "Free",
+      monthlyPrice: 0,
+      annualPrice: 0,
+      period: "forever",
+      features: [
+        "Profile listing in directory",
+        "Browse opportunities & events",
+        "Up to 10 connections",
+      ],
+    },
+    {
+      name: "Gold",
+      monthlyPrice: 9,
+      annualPrice: 7,
+      period: "month",
+      features: [
+        "Everything in Free",
+        "Unlimited connections",
+        "Community (Core) posting",
+        "Standard directory placement",
+        "Advanced profile customization",
+      ],
+    },
+    {
+      name: "Platinum",
+      monthlyPrice: 19,
+      annualPrice: 15,
+      period: "month",
+      features: [
+        "Everything in Gold",
+        "Priority directory placement",
+        "Verified badge eligibility",
+        "Exclusive platinum opportunities",
+        "Featured profile highlight",
+        "Early access to new features",
+        "Dedicated support",
+      ],
+    },
+  ];
+
+  app.get("/api/stripe/plans", async (_req, res) => {
+    // Try to read active prices from Stripe; fall back to static data
+    try {
+      const stripe = await getUncachableStripeClient();
+      const prices = await stripe.prices.list({ active: true, type: "recurring", expand: ["data.product"] });
+      const enriched = STATIC_PLANS.map((plan) => {
+        if (plan.name === "Free") return plan;
+        const match = prices.data.find((p) => {
+          const unitAmount = p.unit_amount ?? 0;
+          const planAmount = plan.monthlyPrice * 100;
+          return (
+            p.recurring?.interval === "month" &&
+            Math.abs(unitAmount - planAmount) < 100
+          );
+        });
+        return {
+          ...plan,
+          stripePriceId: match?.id ?? null,
+          stripeProductId: typeof match?.product === "string" ? match.product : (match?.product as any)?.id ?? null,
+        };
+      });
+      return res.json(enriched);
+    } catch {
+      // Stripe not connected — return static plan data
+      return res.json(STATIC_PLANS);
+    }
   });
 
   app.post("/api/stripe/checkout", async (req, res) => {

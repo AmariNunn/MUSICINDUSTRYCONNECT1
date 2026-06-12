@@ -68,6 +68,25 @@ export default function AccountSettings() {
   
   const loggedInUserId = localStorage.getItem('currentUserId');
   const currentUser = users.find(user => user.id.toString() === loggedInUserId);
+
+  // Fetch live Stripe subscription data (needs auth header)
+  interface SubscriptionInfo {
+    status: string;
+    currentPeriodEnd?: string;
+    cancelAtPeriodEnd?: boolean;
+    memberLevel: string;
+  }
+  const { data: subInfo } = useQuery<SubscriptionInfo>({
+    queryKey: ["/api/stripe/subscription", loggedInUserId],
+    enabled: !!loggedInUserId,
+    queryFn: async () => {
+      const res = await fetch("/api/stripe/subscription", {
+        headers: loggedInUserId ? { "x-user-id": loggedInUserId } : {},
+      });
+      if (!res.ok) return { status: "none", memberLevel: currentUser?.memberLevel ?? "Free" };
+      return res.json();
+    },
+  });
   
   const toggleLegalSection = (section: string) => {
     setExpandedLegalSections(prev => ({
@@ -527,15 +546,30 @@ export default function AccountSettings() {
                           <p className="text-xs text-zinc-500">Billing</p>
                         </div>
                         <div className="p-3 bg-white/60 rounded-lg">
-                          <p className="text-2xl font-bold text-black">
-                            {currentUser?.createdAt
-                              ? Math.max(1, Math.floor((Date.now() - new Date(currentUser.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 30)))
+                          <p className="text-lg font-bold text-black">
+                            {subInfo?.currentPeriodEnd
+                              ? new Date(subInfo.currentPeriodEnd).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                               : "—"}
                           </p>
-                          <p className="text-xs text-zinc-500">Months Active</p>
+                          <p className="text-xs text-zinc-500">Renewal Date</p>
                         </div>
                         <div className="p-3 bg-white/60 rounded-lg">
-                          <p className="text-2xl font-bold text-green-500">Active</p>
+                          {(() => {
+                            const s = subInfo?.status;
+                            const label =
+                              s === "active" ? "Active" :
+                              s === "trialing" ? "Trial" :
+                              s === "canceled" ? "Canceled" :
+                              s === "past_due" ? "Past Due" :
+                              s === "none" || !s ? (isPaid ? "Active" : "Free") :
+                              s.charAt(0).toUpperCase() + s.slice(1);
+                            const color =
+                              s === "active" || s === "trialing" || (!s && isPaid) ? "text-green-500" :
+                              s === "past_due" ? "text-orange-500" :
+                              s === "canceled" ? "text-red-500" :
+                              "text-zinc-500";
+                            return <p className={`text-xl font-bold ${color}`}>{label}</p>;
+                          })()}
                           <p className="text-xs text-zinc-500">Status</p>
                         </div>
                       </div>
