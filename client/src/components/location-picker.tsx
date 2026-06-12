@@ -48,7 +48,7 @@ export function LocationPicker({ value, onChange, placeholder = "Select your loc
   const [search, setSearch] = useState("");
 
   const filteredCities = useMemo(() => {
-    if (!search || search.length < 2) return [];
+    if (!search) return [];
     const searchLower = search.toLowerCase();
     return cities
       .filter(city => 
@@ -82,7 +82,7 @@ export function LocationPicker({ value, onChange, placeholder = "Select your loc
         >
           <div className="flex items-center gap-2 truncate">
             <MapPin className="w-4 h-4 text-[#c084fc] shrink-0" />
-            <span className="truncate">{value || placeholder}</span>
+            <span className="truncate">{open && search ? search : (value || placeholder)}</span>
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-gray-400" />
         </Button>
@@ -96,11 +96,7 @@ export function LocationPicker({ value, onChange, placeholder = "Select your loc
             className="border-0 bg-white text-[#000000]"
           />
           <CommandList className="bg-white">
-            {search.length < 2 ? (
-              <CommandEmpty className="py-6 text-center text-sm text-gray-500">
-                Type at least 2 characters to search...
-              </CommandEmpty>
-            ) : filteredCities.length === 0 ? (
+            {filteredCities.length === 0 && search ? (
               <CommandEmpty className="text-gray-500">No cities found.</CommandEmpty>
             ) : (
               <CommandGroup className="max-h-[300px] overflow-auto bg-white">
