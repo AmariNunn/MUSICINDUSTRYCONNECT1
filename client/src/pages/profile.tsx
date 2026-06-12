@@ -380,6 +380,7 @@ export default function ProfilePage() {
     if (editProfessions.includes(profession)) {
       setEditProfessions(editProfessions.filter(p => p !== profession));
     } else {
+      if (editProfessions.length >= 3) return;
       setEditProfessions([...editProfessions, profession]);
     }
   };
@@ -388,6 +389,7 @@ export default function ProfilePage() {
     if (editGenres.includes(genre)) {
       setEditGenres(editGenres.filter(g => g !== genre));
     } else {
+      if (editGenres.length >= 3) return;
       setEditGenres([...editGenres, genre]);
     }
   };
@@ -1228,6 +1230,7 @@ export default function ProfilePage() {
                       <Briefcase className="w-[5vw] h-[5vw] max-w-[20px] max-h-[20px] text-white" />
                     </div>
                     <h4 className="font-semibold text-black text-[4vw]">Profession</h4>
+                    <span className="text-[3vw] text-black/40 ml-auto">Select up to 3</span>
                   </div>
                   <div className="flex flex-wrap gap-[2vw]">
                     {allProfessions.map((profession) => (
@@ -1257,6 +1260,7 @@ export default function ProfilePage() {
                       <Music className="w-[5vw] h-[5vw] max-w-[20px] max-h-[20px] text-white" />
                     </div>
                     <h4 className="font-semibold text-black text-[4vw]">Genre</h4>
+                    <span className="text-[3vw] text-black/40 ml-auto">Select up to 3</span>
                   </div>
                   <div className="flex flex-wrap gap-[2vw]">
                     {allGenres.map((genre) => (
@@ -1583,7 +1587,10 @@ export default function ProfilePage() {
 
                 {/* Profession */}
                 <div>
-                  <Label className="text-sm font-semibold text-black mb-2 block">Profession</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-sm font-semibold text-black">Profession</Label>
+                    <span className="text-xs text-black/40">Select up to 3</span>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {allProfessions.map((profession) => (
                       <button
@@ -1606,7 +1613,10 @@ export default function ProfilePage() {
 
                 {/* Genre */}
                 <div>
-                  <Label className="text-sm font-semibold text-black mb-2 block">Genre</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-sm font-semibold text-black">Genre</Label>
+                    <span className="text-xs text-black/40">Select up to 3</span>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {allGenres.map((genre) => (
                       <button
