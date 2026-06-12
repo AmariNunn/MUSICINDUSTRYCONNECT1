@@ -47,6 +47,10 @@ import goldBadge from "@assets/Gold_Level-removebg-preview_1762468528106.png";
 import platinumBadge from "@assets/Platinum Level_1762468203581.png";
 import { ProfileGallery } from "@/components/profile-gallery";
 
+function isImageAvatar(avatar?: string | null): boolean {
+  return !!avatar && (avatar.startsWith('data:') || avatar.startsWith('/api/avatar/'));
+}
+
 export default function ProfilePage() {
   const { userSlug } = useParams();
   const [, setLocation] = useLocation();
@@ -130,7 +134,7 @@ export default function ProfilePage() {
       setEditBio(currentUser.bio || "");
       setEditProfessions(currentUser.profession || []);
       setEditGenres(currentUser.genre || []);
-      setEditProfileImage(currentUser.avatar?.startsWith('data:') ? currentUser.avatar : null);
+      setEditProfileImage(null);
       try {
         const portfolio = currentUser.portfolio ? JSON.parse(currentUser.portfolio) : [];
         setEditPortfolio(portfolio);
@@ -304,7 +308,6 @@ export default function ProfilePage() {
       bio: editBio || "",
       profession: editProfessions,
       genre: editGenres,
-      avatar: editProfileImage || currentUser.avatar,
       socialInstagram: editSocialLinks.find(l => l.platform === "Instagram")?.url || "",
       socialTwitter: editSocialLinks.find(l => l.platform === "Twitter")?.url || "",
       website: editSocialLinks.find(l => l.platform === "Website")?.url || "",
@@ -319,14 +322,55 @@ export default function ProfilePage() {
     updateProfileMutation.mutate(updates);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setEditProfileImage(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file || !currentUser?.id) return;
+
+    // Show an instant local preview while the upload is in flight
+    const reader = new FileReader();
+    reader.onload = (ev) => setEditProfileImage(ev.target?.result as string);
+    reader.readAsDataURL(file);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch(`/api/users/${currentUser.id}/avatar`, {
+        method: "POST",
+        headers: { "x-user-id": String(currentUser.id) },
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast({ title: "Upload failed", description: err.message ?? "Could not save photo.", variant: "destructive" });
+        setEditProfileImage(null);
+        return;
+      }
+      // Server saved it — clear the local preview blob and refresh from DB
+      setEditProfileImage(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({ title: "Photo saved!", description: "Your profile picture has been updated." });
+    } catch {
+      toast({ title: "Upload failed", description: "Network error. Please try again.", variant: "destructive" });
+      setEditProfileImage(null);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!currentUser?.id) return;
+    try {
+      const res = await fetch(`/api/users/${currentUser.id}/avatar`, {
+        method: "DELETE",
+        headers: { "x-user-id": String(currentUser.id) },
+      });
+      if (!res.ok) {
+        toast({ title: "Error", description: "Could not remove photo.", variant: "destructive" });
+        return;
+      }
+      setEditProfileImage(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({ title: "Photo removed" });
+    } catch {
+      toast({ title: "Error", description: "Network error.", variant: "destructive" });
     }
   };
 
@@ -456,7 +500,7 @@ export default function ProfilePage() {
               {/* Profile Picture */}
               <div className="relative">
                 <div className="w-32 h-32 bg-gradient-to-br from-[#c084fc] to-[#c084fc] rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-lg overflow-hidden">
-                  {currentUser.avatar?.startsWith('data:') ? (
+                  {isImageAvatar(currentUser.avatar) ? (
                     <img src={currentUser.avatar} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     currentUser.avatar
@@ -949,7 +993,7 @@ export default function ProfilePage() {
                       <div key={post.id} className="p-3 bg-white rounded-xl border border-[#c084fc]/20 hover:border-[#c084fc]/40 transition-all">
                         <div className="flex items-start gap-2">
                           <div className="w-8 h-8 bg-gradient-to-br from-[#c084fc] to-[#a855f7] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 overflow-hidden">
-                            {currentUser?.avatar?.startsWith('data:') ? (
+                            {isImageAvatar(currentUser?.avatar) ? (
                               <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
                             ) : (
                               currentUser?.avatar || "?"
@@ -1154,7 +1198,7 @@ export default function ProfilePage() {
                     <div className="w-[20vw] h-[20vw] max-w-[80px] max-h-[80px] rounded-full overflow-hidden border-2 border-[#c084fc]/30 flex items-center justify-center bg-gradient-to-br from-[#c084fc] to-[#c084fc]/70">
                       {editProfileImage ? (
                         <img src={editProfileImage} alt="Profile" className="w-full h-full object-cover" />
-                      ) : currentUser?.avatar?.startsWith('data:') ? (
+                      ) : isImageAvatar(currentUser?.avatar) ? (
                         <img src={currentUser.avatar} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-white font-bold text-[6vw]">{currentUser?.avatar || "?"}</span>
@@ -1173,9 +1217,9 @@ export default function ProfilePage() {
                           Upload Photo
                         </div>
                       </label>
-                      {editProfileImage && (
+                      {(editProfileImage || isImageAvatar(currentUser?.avatar)) && (
                         <button 
-                          onClick={() => setEditProfileImage(null)}
+                          onClick={handleRemoveAvatar}
                           className="text-red-400 text-[3vw] mt-[2vw]"
                         >
                           Remove
@@ -1503,7 +1547,7 @@ export default function ProfilePage() {
                     <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#c084fc]/30 flex items-center justify-center bg-gradient-to-br from-[#c084fc] to-[#c084fc]/70">
                       {editProfileImage ? (
                         <img src={editProfileImage} alt="Profile" className="w-full h-full object-cover" />
-                      ) : currentUser?.avatar?.startsWith('data:') ? (
+                      ) : isImageAvatar(currentUser?.avatar) ? (
                         <img src={currentUser.avatar} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-white font-bold text-2xl">{currentUser?.avatar || "?"}</span>
@@ -1521,9 +1565,9 @@ export default function ProfilePage() {
                           Upload Photo
                         </div>
                       </label>
-                      {editProfileImage && (
+                      {(editProfileImage || isImageAvatar(currentUser?.avatar)) && (
                         <button 
-                          onClick={() => setEditProfileImage(null)}
+                          onClick={handleRemoveAvatar}
                           className="text-red-400 text-xs mt-2 block"
                         >
                           Remove
@@ -1807,7 +1851,7 @@ export default function ProfilePage() {
                     data-testid={`connection-user-${user.id}`}
                     className="no-underline flex items-center space-x-3 p-3 rounded-xl bg-white hover:bg-purple-50 transition-colors cursor-pointer border border-gray-100 hover:border-[#c084fc]/30"
                   >
-                    {user.avatar && user.avatar.trim().length > 0 ? (
+                    {isImageAvatar(user.avatar) ? (
                       <img
                         src={user.avatar}
                         alt={name}

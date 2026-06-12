@@ -2,7 +2,7 @@ import { useFavorites } from "@/hooks/use-favorites";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { X, CheckCircle, Heart, Plus, Mail, Users, Briefcase, Loader2 } from "lucide-react";
 import type { User } from "@shared/schema";
 
@@ -31,8 +31,9 @@ export default function ProfileModal({ user, open, onClose }: ProfileModalProps)
         <DialogHeader className="flex flex-row items-start justify-between space-y-0 pb-6">
           <div className="flex items-center space-x-4">
             <Avatar className="w-20 h-20">
+              <AvatarImage src={(user.avatar?.startsWith('data:') || user.avatar?.startsWith('/api/avatar/')) ? user.avatar : undefined} />
               <AvatarFallback className="gradient-primary text-white font-bold text-2xl">
-                {user.avatar}
+                {user.avatar?.length <= 4 ? user.avatar : `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`}
               </AvatarFallback>
             </Avatar>
             <div>

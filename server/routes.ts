@@ -16,6 +16,11 @@ import {
   isGalleryKey,
   galleryUrlToKey,
   deleteGalleryObject,
+  AVATAR_KEY_PREFIX,
+  AVATAR_URL_PREFIX,
+  isAvatarKey,
+  avatarUrlToKey,
+  deleteAvatarObject,
 } from "./object-storage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -123,9 +128,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existingUser) {
         return res.status(404).json({ message: "User not found" });
       }
-      // Strip admin flag from user-facing update endpoint — admin can only
-      // be granted by editing the database directly.
-      const { isAdmin: _ignoredAdmin, ...sanitizedUpdates } = req.body ?? {};
+      // Strip admin flag and avatar from user-facing update endpoint.
+      // Avatar is managed exclusively through POST/DELETE /api/users/:id/avatar.
+      const { isAdmin: _ignoredAdmin, avatar: _ignoredAvatar, ...sanitizedUpdates } = req.body ?? {};
       const updatedUser = await storage.updateUser(id, sanitizedUpdates);
       if (!updatedUser) {
         return res.status(500).json({ message: "Failed to update user" });
@@ -134,6 +139,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error(`Error patching user ${req.params.id}:`, error);
       res.status(500).json({ message: "Failed to update user", error: error.message });
+    }
+  });
+
+  // Avatar upload/serve/delete
+  const avatarUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  });
+
+  app.post(
+    "/api/users/:id/avatar",
+    avatarUpload.single("file"),
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const actingId = parseInt(String(req.header("x-user-id") ?? "0"));
+        if (!actingId || actingId !== id) {
+          return res.status(403).json({ message: "Not authorized" });
+        }
+        const file = req.file;
+        if (!file) return res.status(400).json({ message: "No file uploaded" });
+        if (!file.mimetype.startsWith("image/")) {
+          return res.status(400).json({ message: "Only image files are allowed" });
+        }
+
+        const existingUser = await storage.getUser(id);
+        if (!existingUser) return res.status(404).json({ message: "User not found" });
+
+        // Delete the old avatar blob if it was previously stored
+        const oldKey = existingUser.avatar ? avatarUrlToKey(existingUser.avatar) : null;
+
+        const ext = (file.originalname.split(".").pop() ?? "")
+          .replace(/[^A-Za-z0-9]/g, "")
+          .slice(0, 8);
+        const key = `${AVATAR_KEY_PREFIX}${id}/${randomUUID()}${ext ? "." + ext : ""}`;
+        const client = getObjectStorageClient();
+        const result = await client.upload(key, file.buffer, file.mimetype);
+        if (!result.ok) {
+          return res.status(502).json({ message: `Storage upload failed: ${result.error}` });
+        }
+
+        const avatarUrl = AVATAR_URL_PREFIX + key;
+        const updatedUser = await storage.updateUser(id, { avatar: avatarUrl });
+        if (!updatedUser) return res.status(500).json({ message: "Failed to update user" });
+
+        // Best-effort cleanup of old blob after successful save
+        if (oldKey) await deleteAvatarObject(oldKey);
+
+        res.status(201).json({ avatarUrl, user: updatedUser });
+      } catch (error: any) {
+        if (error?.code === "LIMIT_FILE_SIZE") {
+          return res.status(413).json({ message: "Image exceeds 10 MB limit" });
+        }
+        res.status(500).json({ message: error?.message ?? "Upload failed" });
+      }
+    }
+  );
+
+  app.delete("/api/users/:id/avatar", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const actingId = parseInt(String(req.header("x-user-id") ?? "0"));
+      if (!actingId || actingId !== id) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      const existingUser = await storage.getUser(id);
+      if (!existingUser) return res.status(404).json({ message: "User not found" });
+
+      const oldKey = existingUser.avatar ? avatarUrlToKey(existingUser.avatar) : null;
+      const initials = `${existingUser.firstName.charAt(0)}${existingUser.lastName.charAt(0)}`.toUpperCase();
+      const updatedUser = await storage.updateUser(id, { avatar: initials });
+      if (!updatedUser) return res.status(500).json({ message: "Failed to update user" });
+
+      if (oldKey) await deleteAvatarObject(oldKey);
+      res.json({ user: updatedUser });
+    } catch (error: any) {
+      res.status(500).json({ message: error?.message ?? "Failed to remove avatar" });
+    }
+  });
+
+  // Serve avatar blobs
+  app.get(/^\/api\/avatar\/media\/(.+)$/, async (req, res) => {
+    try {
+      const params = req.params as unknown as Record<string, string>;
+      const key = params[0];
+      if (!key || !isAvatarKey(key)) return res.status(400).send("Invalid key");
+      const client = getObjectStorageClient();
+      const result = await client.downloadAsBytes(key);
+      if (!result.ok) return res.status(404).send("Not found");
+      const value: unknown = result.value;
+      let bytes: Buffer;
+      if (Buffer.isBuffer(value)) {
+        bytes = value;
+      } else if (Array.isArray(value) && Buffer.isBuffer(value[0])) {
+        bytes = value[0];
+      } else if (value instanceof Uint8Array) {
+        bytes = Buffer.from(value);
+      } else {
+        return res.status(500).send("Unexpected storage payload");
+      }
+      const ext = key.split(".").pop()?.toLowerCase() ?? "";
+      const contentType =
+        ext === "png" ? "image/png" :
+        ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
+        ext === "gif" ? "image/gif" :
+        ext === "webp" ? "image/webp" :
+        "application/octet-stream";
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      res.send(bytes);
+    } catch {
+      res.status(500).send("Failed to fetch avatar");
     }
   });
 

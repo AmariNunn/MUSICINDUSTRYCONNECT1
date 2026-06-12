@@ -4,6 +4,9 @@ export const GALLERY_KEY_PREFIX = "gallery/";
 export const GALLERY_URL_PREFIX = "/api/gallery/media/";
 export const GALLERY_BUCKET = "gallery";
 
+export const AVATAR_KEY_PREFIX = "avatar/";
+export const AVATAR_URL_PREFIX = "/api/avatar/media/";
+
 let cachedClient: SupabaseClient | null = null;
 
 function getSupabaseStorage(): SupabaseClient {
@@ -123,5 +126,29 @@ export async function deleteGalleryObject(key: string): Promise<void> {
     await getObjectStorageClient().delete(key);
   } catch {
     // best-effort: don't fail post deletion on missing/blob errors
+  }
+}
+
+export function isAvatarKey(key: string): boolean {
+  return (
+    typeof key === "string" &&
+    key.startsWith(AVATAR_KEY_PREFIX) &&
+    !key.includes("..") &&
+    /^[A-Za-z0-9_\-./]+$/.test(key)
+  );
+}
+
+export function avatarUrlToKey(url: string): string | null {
+  if (!url.startsWith(AVATAR_URL_PREFIX)) return null;
+  const key = url.slice(AVATAR_URL_PREFIX.length);
+  return isAvatarKey(key) ? key : null;
+}
+
+export async function deleteAvatarObject(key: string): Promise<void> {
+  if (!isAvatarKey(key)) return;
+  try {
+    await getObjectStorageClient().delete(key);
+  } catch {
+    // best-effort
   }
 }

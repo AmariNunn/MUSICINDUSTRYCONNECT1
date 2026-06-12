@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useLocation } from "wouter";
 import { CalendarDays, Users, Handshake, Briefcase, GraduationCap, Heart, MessageCircle, Share, Eye, Mic, DollarSign, BookOpen, Calendar, TrendingUp, Star, ArrowRight, Play, MapPin, User as UserIcon } from "lucide-react";
 import type { Post, User } from "@shared/schema";
@@ -333,6 +333,7 @@ export default function HomePage() {
                     <CardContent className="p-4">
                       <div className="flex items-start space-x-4">
                         <Avatar className="w-10 h-10">
+                          <AvatarImage src={(post.author.avatar?.startsWith('data:') || post.author.avatar?.startsWith('/api/avatar/')) ? post.author.avatar : undefined} />
                           <AvatarFallback className="bg-purple-600 text-white font-bold text-sm">
                             {post.author.avatar}
                           </AvatarFallback>

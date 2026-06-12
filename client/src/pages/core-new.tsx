@@ -463,8 +463,12 @@ export default function CorePage() {
                       <Card key={post.id} className="bg-white border-[#c084fc]/20 rounded-2xl hover:shadow-lg transition-all">
                         <CardContent className="p-6">
                           <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-[#c084fc] rounded-full flex items-center justify-center text-white font-bold shrink-0">
-                              {post.author.avatar}
+                            <div className="w-12 h-12 bg-[#c084fc] rounded-full flex items-center justify-center text-white font-bold shrink-0 overflow-hidden">
+                              {(post.author.avatar?.startsWith('data:') || post.author.avatar?.startsWith('/api/avatar/')) ? (
+                                <img src={post.author.avatar} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                post.author.avatar
+                              )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -516,8 +520,12 @@ export default function CorePage() {
                                 <div className="mt-4 pt-4 border-t border-[#c084fc]/20 space-y-4">
                                   {/* Comment Input */}
                                   <div className="flex gap-3 items-start">
-                                    <div className="w-8 h-8 bg-gradient-to-br from-[#c084fc] to-[#c084fc]/70 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
-                                      {currentUser?.avatar || "?"}
+                                    <div className="w-8 h-8 bg-gradient-to-br from-[#c084fc] to-[#c084fc]/70 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 overflow-hidden">
+                                      {(currentUser?.avatar?.startsWith('data:') || currentUser?.avatar?.startsWith('/api/avatar/')) ? (
+                                        <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
+                                      ) : (
+                                        currentUser?.avatar || "?"
+                                      )}
                                     </div>
                                     <div className="flex-1 relative">
                                       <Input
@@ -938,8 +946,12 @@ export default function CorePage() {
                         communityPosts.map((post) => (
                           <div key={post.id} className="bg-gradient-to-br from-white to-[#c084fc]/5 border border-[#c084fc]/20 rounded-2xl p-4">
                             <div className="flex items-start gap-3">
-                              <div className="w-11 h-11 bg-gradient-to-br from-[#c084fc] to-[#c084fc]/70 rounded-xl flex items-center justify-center text-white font-bold shrink-0 text-sm shadow-md">
-                                {post.author.avatar}
+                              <div className="w-11 h-11 bg-gradient-to-br from-[#c084fc] to-[#c084fc]/70 rounded-xl flex items-center justify-center text-white font-bold shrink-0 text-sm shadow-md overflow-hidden">
+                                {(post.author.avatar?.startsWith('data:') || post.author.avatar?.startsWith('/api/avatar/')) ? (
+                                  <img src={post.author.avatar} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  post.author.avatar
+                                )}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex flex-wrap items-center gap-1.5 mb-2">

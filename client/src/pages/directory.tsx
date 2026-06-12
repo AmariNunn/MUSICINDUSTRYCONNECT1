@@ -205,8 +205,12 @@ export default function DirectoryPage() {
             {users.map((user) => (
               <div key={user.id} className="bg-gray-900 border-gray-700 border rounded-lg p-6 hover:border-purple-500 transition-colors cursor-pointer" onClick={() => setSelectedUser(user)}>
                 <div className="flex items-center space-x-4 mb-4">
-                  <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                    {user.avatar}
+                  <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold overflow-hidden">
+                    {(user.avatar?.startsWith('data:') || user.avatar?.startsWith('/api/avatar/')) ? (
+                      <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      user.avatar
+                    )}
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-white">

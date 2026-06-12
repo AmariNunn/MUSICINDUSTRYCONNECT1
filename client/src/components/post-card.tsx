@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Share } from "lucide-react";
 import type { Post, User } from "@shared/schema";
 
@@ -50,6 +50,7 @@ export default function PostCard({ post }: PostCardProps) {
       <CardContent className="p-6">
         <div className="flex items-start space-x-4">
           <Avatar className="w-12 h-12">
+            <AvatarImage src={(post.author.avatar?.startsWith('data:') || post.author.avatar?.startsWith('/api/avatar/')) ? post.author.avatar : undefined} />
             <AvatarFallback className="gradient-light-accent text-white font-bold">
               {post.author.avatar}
             </AvatarFallback>
