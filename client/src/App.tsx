@@ -1,7 +1,7 @@
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Navigation from "@/components/navigation";
@@ -14,6 +14,9 @@ import ProfilePage from "@/pages/profile";
 import AccountSettingsPage from "@/pages/account-settings";
 import AdminPage from "@/pages/admin";
 import NotFound from "@/pages/not-found";
+import UpgradeModal from "@/components/upgrade-modal";
+import { UpgradeModalProvider, useUpgradeModal } from "@/hooks/use-upgrade-modal";
+import type { User } from "@shared/schema";
 
 function ScrollToTop() {
   const [location] = useLocation();
@@ -21,6 +24,21 @@ function ScrollToTop() {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [location]);
   return null;
+}
+
+function GlobalUpgradeModal() {
+  const { open, closeUpgradeModal } = useUpgradeModal();
+  const loggedInUserId = localStorage.getItem("currentUserId");
+  const { data: users = [] } = useQuery<User[]>({ queryKey: ["/api/users"] });
+  const currentUser = users.find((u) => u.id.toString() === loggedInUserId);
+
+  return (
+    <UpgradeModal
+      open={open}
+      onClose={closeUpgradeModal}
+      currentPlan={currentUser?.memberLevel ?? "Free"}
+    />
+  );
 }
 
 function Router() {
@@ -52,8 +70,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router />
+        <UpgradeModalProvider>
+          <Toaster />
+          <Router />
+          <GlobalUpgradeModal />
+        </UpgradeModalProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

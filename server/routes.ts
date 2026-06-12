@@ -9,6 +9,7 @@ import { users } from "@shared/schema";
 import { sendOpportunityApplicationEmail, sendNewConnectionEmail } from "./mailer";
 import multer from "multer";
 import { randomUUID } from "crypto";
+import { getUncachableStripeClient } from "./stripeClient";
 import {
   getObjectStorageClient,
   GALLERY_KEY_PREFIX,
@@ -925,6 +926,179 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ─── Stripe Routes ──────────────────────────────────────────────────────────
+
+  app.get("/api/stripe/plans", (_req, res) => {
+    res.json([
+      {
+        name: "Free",
+        price: 0,
+        period: "forever",
+        features: [
+          "Profile listing in directory",
+          "Browse opportunities & events",
+          "Up to 10 connections",
+        ],
+      },
+      {
+        name: "Gold",
+        price: 9,
+        period: "month",
+        features: [
+          "Everything in Free",
+          "Unlimited connections",
+          "Community (Core) posting",
+          "Standard directory placement",
+          "Advanced profile customization",
+        ],
+      },
+      {
+        name: "Platinum",
+        price: 19,
+        period: "month",
+        features: [
+          "Everything in Gold",
+          "Priority directory placement",
+          "Verified badge eligibility",
+          "Exclusive platinum opportunities",
+          "Featured profile highlight",
+          "Early access to new features",
+          "Dedicated support",
+        ],
+      },
+    ]);
+  });
+
+  app.post("/api/stripe/checkout", async (req, res) => {
+    const actingId = parseInt(String(req.header("x-user-id") ?? "0"));
+    if (!actingId) return res.status(401).json({ message: "Not authenticated" });
+
+    const { plan } = req.body ?? {};
+    if (plan !== "Gold" && plan !== "Platinum") {
+      return res.status(400).json({ message: "plan must be Gold or Platinum" });
+    }
+
+    const user = await storage.getUser(actingId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    try {
+      const stripe = await getUncachableStripeClient();
+
+      const rawDomain =
+        process.env.REPLIT_DOMAINS?.split(",")[0] ??
+        process.env.REPLIT_DEV_DOMAIN ??
+        "localhost:5000";
+      const baseUrl = rawDomain.startsWith("http") ? rawDomain : `https://${rawDomain}`;
+
+      // Find or create Stripe customer
+      let customerId = user.stripeCustomerId ?? undefined;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`.trim() || user.email,
+          metadata: { userId: String(user.id) },
+        });
+        customerId = customer.id;
+        await storage.updateUser(actingId, { stripeCustomerId: customerId });
+      }
+
+      const unitAmount = plan === "Gold" ? 900 : 1900;
+
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              unit_amount: unitAmount,
+              recurring: { interval: "month" },
+              product_data: {
+                name: `MIC ${plan} Membership`,
+                description:
+                  plan === "Gold"
+                    ? "Full community access and unlimited networking."
+                    : "The ultimate membership for industry pros.",
+              },
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "subscription",
+        success_url: `${baseUrl}/account-settings?tab=membership&success=true`,
+        cancel_url: `${baseUrl}/account-settings?tab=membership`,
+        metadata: { userId: String(user.id), plan },
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error("[stripe] Checkout error:", error.message);
+      res.status(503).json({
+        message:
+          "Stripe is not available. Please connect Stripe via the Integrations tab.",
+      });
+    }
+  });
+
+  app.post("/api/stripe/portal", async (req, res) => {
+    const actingId = parseInt(String(req.header("x-user-id") ?? "0"));
+    if (!actingId) return res.status(401).json({ message: "Not authenticated" });
+
+    const user = await storage.getUser(actingId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user.stripeCustomerId) {
+      return res.status(400).json({ message: "No active subscription found" });
+    }
+
+    try {
+      const stripe = await getUncachableStripeClient();
+
+      const rawDomain =
+        process.env.REPLIT_DOMAINS?.split(",")[0] ??
+        process.env.REPLIT_DEV_DOMAIN ??
+        "localhost:5000";
+      const baseUrl = rawDomain.startsWith("http") ? rawDomain : `https://${rawDomain}`;
+
+      const session = await stripe.billingPortal.sessions.create({
+        customer: user.stripeCustomerId,
+        return_url: `${baseUrl}/account-settings?tab=membership`,
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error("[stripe] Portal error:", error.message);
+      res.status(503).json({ message: "Stripe billing portal is not available." });
+    }
+  });
+
+  app.get("/api/stripe/subscription", async (req, res) => {
+    const actingId = parseInt(String(req.header("x-user-id") ?? "0"));
+    if (!actingId) return res.status(401).json({ message: "Not authenticated" });
+
+    const user = await storage.getUser(actingId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user.stripeCustomerId || !user.stripeSubscriptionId) {
+      return res.json({ status: "none", memberLevel: user.memberLevel });
+    }
+
+    try {
+      const stripe = await getUncachableStripeClient();
+      const sub = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+      res.json({
+        status: sub.status,
+        currentPeriodEnd: new Date((sub as any).current_period_end * 1000).toISOString(),
+        cancelAtPeriodEnd: (sub as any).cancel_at_period_end,
+        memberLevel: user.memberLevel,
+      });
+    } catch (error: any) {
+      console.error("[stripe] Subscription fetch error:", error.message);
+      res.json({ status: "unknown", memberLevel: user.memberLevel });
+    }
+  });
+
+  // ────────────────────────────────────────────────────────────────────────────
+
   app.post("/api/setup-database", async (req, res) => {
     try {
       await db.execute(sql`
@@ -943,7 +1117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           bio TEXT,
           avatar TEXT NOT NULL DEFAULT '',
           verified BOOLEAN NOT NULL DEFAULT FALSE,
-          member_level TEXT NOT NULL DEFAULT 'Gold',
+          member_level TEXT NOT NULL DEFAULT 'Free',
           show_picture BOOLEAN NOT NULL DEFAULT TRUE,
           show_email BOOLEAN NOT NULL DEFAULT FALSE,
           show_phone BOOLEAN NOT NULL DEFAULT FALSE,

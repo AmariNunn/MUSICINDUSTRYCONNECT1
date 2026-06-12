@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import UpgradeModal from "@/components/upgrade-modal";
+import { useUpgradeModal } from "@/hooks/use-upgrade-modal";
 import { LocationPicker } from "@/components/location-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,7 +53,8 @@ export default function AccountSettings() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("personal");
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { openUpgradeModal } = useUpgradeModal();
+  const [portalLoading, setPortalLoading] = useState(false);
   const [expandedLegalSections, setExpandedLegalSections] = useState<{[key: string]: boolean}>({
     userAgreement: false,
     privacyPolicy: false,
@@ -478,13 +479,6 @@ export default function AccountSettings() {
           </TabsContent>
 
           <TabsContent value="membership">
-            {/* Upgrade Modal */}
-            <UpgradeModal
-              open={showUpgradeModal}
-              onClose={() => setShowUpgradeModal(false)}
-              currentPlan={currentUser?.memberLevel ?? "Free"}
-            />
-
             <Card className="bg-white border border-zinc-200 shadow-sm rounded-xl">
               <CardHeader className="border-b border-zinc-200 pb-4">
                 <CardTitle className="flex items-center gap-2 text-black">
@@ -516,7 +510,7 @@ export default function AccountSettings() {
                         {plan !== "Platinum" && (
                           <Button
                             className="bg-[#c084fc] hover:bg-[#a855f7] text-white font-semibold"
-                            onClick={() => setShowUpgradeModal(true)}
+                            onClick={openUpgradeModal}
                             data-testid="button-upgrade"
                           >
                             {plan === "Free" ? "Upgrade Plan" : "Upgrade to Platinum"}
@@ -573,7 +567,7 @@ export default function AccountSettings() {
                     <Button
                       variant="outline"
                       className="mt-4 border-[#c084fc] text-[#c084fc] hover:bg-[#c084fc]/10"
-                      onClick={() => setShowUpgradeModal(true)}
+                      onClick={openUpgradeModal}
                       data-testid="button-view-all-plans"
                     >
                       View all plans & features
@@ -586,20 +580,55 @@ export default function AccountSettings() {
                 <div>
                   <h3 className="font-semibold text-black mb-4 flex items-center gap-2">
                     <CreditCard className="w-5 h-5 text-zinc-600" />
-                    Payment Methods
+                    Manage Billing
                   </h3>
-                  <div className="p-4 bg-zinc-50 rounded-lg text-center border border-zinc-200">
-                    <CreditCard className="w-8 h-8 mx-auto mb-2 text-zinc-400" />
-                    <p className="text-zinc-500">No payment methods on file</p>
-                    <Button
-                      variant="outline"
-                      className="mt-3 border-[#c084fc] text-[#c084fc] hover:bg-[#c084fc] hover:text-white"
-                      onClick={() => setShowUpgradeModal(true)}
-                      data-testid="button-add-payment"
-                    >
-                      Add Payment Method
-                    </Button>
-                  </div>
+                  {(currentUser?.memberLevel === "Gold" || currentUser?.memberLevel === "Platinum") ? (
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Button
+                        className="bg-[#c084fc] hover:bg-[#a855f7] text-white font-semibold"
+                        onClick={async () => {
+                          setPortalLoading(true);
+                          try {
+                            const userId = localStorage.getItem("currentUserId");
+                            const res = await fetch("/api/stripe/portal", {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                                ...(userId ? { "x-user-id": userId } : {}),
+                              },
+                            });
+                            const data = await res.json();
+                            if (!res.ok) {
+                              toast({ title: "Error", description: data.message ?? "Could not open billing portal.", variant: "destructive" });
+                            } else if (data.url) {
+                              window.location.href = data.url;
+                            }
+                          } catch {
+                            toast({ title: "Error", description: "Could not connect to billing service.", variant: "destructive" });
+                          } finally {
+                            setPortalLoading(false);
+                          }
+                        }}
+                        disabled={portalLoading}
+                        data-testid="button-manage-billing"
+                      >
+                        {portalLoading ? "Opening…" : "Open Customer Portal"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-zinc-50 rounded-lg text-center border border-zinc-200">
+                      <CreditCard className="w-8 h-8 mx-auto mb-2 text-zinc-400" />
+                      <p className="text-zinc-500 text-sm mb-3">Upgrade to Gold or Platinum to manage billing.</p>
+                      <Button
+                        variant="outline"
+                        className="border-[#c084fc] text-[#c084fc] hover:bg-[#c084fc] hover:text-white"
+                        onClick={openUpgradeModal}
+                        data-testid="button-add-payment"
+                      >
+                        View Plans
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 
                 <Separator className="bg-zinc-200" />

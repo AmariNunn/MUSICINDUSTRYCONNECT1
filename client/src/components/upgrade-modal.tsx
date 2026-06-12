@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
 import {
   Check,
   X,
@@ -9,7 +8,9 @@ import {
   Zap,
   ArrowRight,
   Sparkles,
+  Loader2,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -34,7 +35,6 @@ const plans = [
       { text: "Exclusive opportunities", included: false },
     ],
     ctaText: "Current Plan",
-    ctaDisabledFor: "Free",
     accentBorder: "border-zinc-700",
     checkColor: "text-zinc-400",
     checkBg: "bg-zinc-800",
@@ -85,13 +85,57 @@ const plans = [
   },
 ];
 
-export default function UpgradeModal({ open, onClose, currentPlan = "Free" }: UpgradeModalProps) {
+export default function UpgradeModal({
+  open,
+  onClose,
+  currentPlan = "Free",
+}: UpgradeModalProps) {
+  const { toast } = useToast();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
   if (!open) return null;
+
+  const handleUpgrade = async (planName: string) => {
+    setLoadingPlan(planName);
+    try {
+      const userId = localStorage.getItem("currentUserId");
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(userId ? { "x-user-id": userId } : {}),
+        },
+        body: JSON.stringify({ plan: planName }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast({
+          title: "Stripe not available",
+          description: data.message ?? "Could not start checkout. Please try again later.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      toast({
+        title: "Something went wrong",
+        description: "Could not connect to the payment service. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
@@ -126,6 +170,7 @@ export default function UpgradeModal({ open, onClose, currentPlan = "Free" }: Up
           {plans.map((plan) => {
             const isCurrent = currentPlan === plan.name;
             const isPlatinum = plan.name === "Platinum";
+            const isLoading = loadingPlan === plan.name;
 
             return (
               <div
@@ -140,7 +185,9 @@ export default function UpgradeModal({ open, onClose, currentPlan = "Free" }: Up
                 {/* Badge */}
                 {plan.badge && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className={`inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-bold ${plan.badgeBg}`}>
+                    <span
+                      className={`inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-bold ${(plan as any).badgeBg}`}
+                    >
                       <Zap className="w-3 h-3" />
                       {plan.badge}
                     </span>
@@ -186,15 +233,24 @@ export default function UpgradeModal({ open, onClose, currentPlan = "Free" }: Up
                     Stay on Free
                   </button>
                 ) : (
-                  <Link href="/account-settings" onClick={onClose}>
-                    <Button
-                      className={`w-full py-2.5 rounded-xl text-sm ${plan.buttonClass} mb-5`}
-                      data-testid={`button-upgrade-${plan.name.toLowerCase()}`}
-                    >
-                      {plan.ctaText}
-                      <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-                    </Button>
-                  </Link>
+                  <Button
+                    className={`w-full py-2.5 rounded-xl text-sm ${(plan as any).buttonClass} mb-5`}
+                    onClick={() => handleUpgrade(plan.name)}
+                    disabled={isLoading || loadingPlan !== null}
+                    data-testid={`button-upgrade-${plan.name.toLowerCase()}`}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                        Redirecting…
+                      </>
+                    ) : (
+                      <>
+                        {plan.ctaText}
+                        <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                      </>
+                    )}
+                  </Button>
                 )}
 
                 {/* Divider */}
@@ -205,7 +261,9 @@ export default function UpgradeModal({ open, onClose, currentPlan = "Free" }: Up
                   {plan.features.map((feature, fi) => (
                     <li key={fi} className="flex items-start gap-2.5">
                       {feature.included ? (
-                        <div className={`mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${plan.checkBg}`}>
+                        <div
+                          className={`mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${plan.checkBg}`}
+                        >
                           <Check className={`w-2.5 h-2.5 ${plan.checkColor}`} />
                         </div>
                       ) : (
@@ -213,7 +271,11 @@ export default function UpgradeModal({ open, onClose, currentPlan = "Free" }: Up
                           <X className="w-2.5 h-2.5 text-zinc-600" />
                         </div>
                       )}
-                      <span className={`text-xs leading-relaxed ${feature.included ? "text-zinc-300" : "text-zinc-600"}`}>
+                      <span
+                        className={`text-xs leading-relaxed ${
+                          feature.included ? "text-zinc-300" : "text-zinc-600"
+                        }`}
+                      >
                         {feature.text}
                       </span>
                     </li>

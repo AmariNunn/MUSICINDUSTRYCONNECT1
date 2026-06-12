@@ -21,7 +21,7 @@ async function initializeDatabase() {
         bio TEXT,
         avatar TEXT NOT NULL DEFAULT '',
         verified BOOLEAN NOT NULL DEFAULT FALSE,
-        member_level TEXT NOT NULL DEFAULT 'Gold',
+        member_level TEXT NOT NULL DEFAULT 'Free',
         show_picture BOOLEAN NOT NULL DEFAULT TRUE,
         show_email BOOLEAN NOT NULL DEFAULT FALSE,
         show_phone BOOLEAN NOT NULL DEFAULT FALSE,

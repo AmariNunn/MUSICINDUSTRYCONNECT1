@@ -32,10 +32,11 @@ import {
   Trash2
 } from "lucide-react";
 import type { User, Post, Comment } from "@shared/schema";
-import { Heart, MessageCircle, Send as SendIcon } from "lucide-react";
+import { Heart, MessageCircle, Send as SendIcon, Lock } from "lucide-react";
 import { getGenreBadge, getProfessionBadge } from "@/lib/badges";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useUpgradeModal } from "@/hooks/use-upgrade-modal";
 import communityIcon from "@assets/Community (2)_1762467983061.png";
 import opportunityIcon from "@assets/Opportunity_1762467984905.png";
 import resourcesIcon from "@assets/Resources_1762467991075.png";
@@ -68,6 +69,7 @@ export default function CorePage() {
   const [postComments, setPostComments] = useState<Record<number, (Comment & { author: User })[]>>({});
   const [loadingComments, setLoadingComments] = useState<number | null>(null);
   const { toast } = useToast();
+  const { openUpgradeModal } = useUpgradeModal();
 
   useEffect(() => {
     const checkMobile = () => {
@@ -90,6 +92,7 @@ export default function CorePage() {
   const loggedInUserId = localStorage.getItem('currentUserId');
   const currentUser = loggedInUserId ? users.find(user => user.id.toString() === loggedInUserId) : undefined;
   const isPlatinum = currentUser?.memberLevel === "Platinum";
+  const isFreeUser = !currentUser || currentUser.memberLevel === "Free";
 
   const likeMutation = useMutation({
     mutationFn: async (postId: number) => {
@@ -438,14 +441,25 @@ export default function CorePage() {
                   Post and learn about upcoming shows, releases, non-paid collaborations, and local events
                 </p>
 
-                <Button 
-                  className="bg-[#c084fc] hover:bg-[#c084fc]/90 text-white font-medium mb-6"
-                  onClick={() => setShowCreatePostDialog(true)}
-                  data-testid="button-create-post"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Post
-                </Button>
+                {isFreeUser ? (
+                  <Button
+                    className="bg-zinc-700 hover:bg-zinc-600 text-white font-medium mb-6"
+                    onClick={openUpgradeModal}
+                    data-testid="button-create-post-upgrade"
+                  >
+                    <Lock className="w-4 h-4 mr-2" />
+                    Upgrade to Post
+                  </Button>
+                ) : (
+                  <Button
+                    className="bg-[#c084fc] hover:bg-[#c084fc]/90 text-white font-medium mb-6"
+                    onClick={() => setShowCreatePostDialog(true)}
+                    data-testid="button-create-post"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Post
+                  </Button>
+                )}
 
                 <div className="space-y-6">
                   {communityPosts.length === 0 ? (
@@ -924,14 +938,25 @@ export default function CorePage() {
                   </div>
 
                   <div className="flex-1 px-4 py-4">
-                    <Button 
-                      className="bg-[#c084fc] hover:bg-[#c084fc]/90 text-white font-medium mb-4 w-full py-3 text-sm rounded-xl"
-                      onClick={() => setShowCreatePostDialog(true)}
-                      data-testid="button-create-post-mobile"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Post
-                    </Button>
+                    {isFreeUser ? (
+                      <Button
+                        className="bg-zinc-700 hover:bg-zinc-600 text-white font-medium mb-4 w-full py-3 text-sm rounded-xl"
+                        onClick={openUpgradeModal}
+                        data-testid="button-create-post-mobile-upgrade"
+                      >
+                        <Lock className="w-4 h-4 mr-2" />
+                        Upgrade to Post
+                      </Button>
+                    ) : (
+                      <Button
+                        className="bg-[#c084fc] hover:bg-[#c084fc]/90 text-white font-medium mb-4 w-full py-3 text-sm rounded-xl"
+                        onClick={() => setShowCreatePostDialog(true)}
+                        data-testid="button-create-post-mobile"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Post
+                      </Button>
+                    )}
 
                     <div className="space-y-3">
                       {communityPosts.length === 0 ? (
