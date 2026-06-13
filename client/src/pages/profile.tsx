@@ -1422,6 +1422,17 @@ export default function ProfilePage() {
                           className="flex-1 text-[3.5vw] h-[10vw] border-[#c084fc]/20 bg-white text-black"
                           data-testid={`input-social-${index}`}
                         />
+                        {link.url && (
+                          <a
+                            href={link.url.startsWith("http") ? link.url : `https://${link.url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#c084fc] p-[2vw]"
+                            data-testid={`link-open-social-${index}`}
+                          >
+                            <ExternalLink className="w-[4vw] h-[4vw]" />
+                          </a>
+                        )}
                         <button 
                           onClick={() => setEditSocialLinks(editSocialLinks.filter((_, i) => i !== index))}
                           className="text-red-400 p-[2vw]"
