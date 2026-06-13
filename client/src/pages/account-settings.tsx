@@ -166,10 +166,8 @@ export default function AccountSettings() {
   };
 
   const handleLogoutAllDevices = () => {
-    toast({
-      title: "Logged Out",
-      description: "You have been logged out of all devices."
-    });
+    localStorage.removeItem("currentUserId");
+    window.location.href = "/login";
   };
 
   return (
@@ -348,20 +346,6 @@ export default function AccountSettings() {
                     </Button>
                   </div>
                   
-                  <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-lg border border-zinc-200">
-                    <div className="flex items-center gap-3">
-                      <Smartphone className="w-5 h-5 text-zinc-600" />
-                      <div>
-                        <p className="font-medium text-black">Two-Factor Authentication</p>
-                        <p className="text-sm text-zinc-500">Add an extra layer of security</p>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={security.twoFactorEnabled}
-                      onCheckedChange={(checked) => setSecurity({...security, twoFactorEnabled: checked})}
-                      data-testid="switch-2fa"
-                    />
-                  </div>
                 </div>
                 
                 <Separator className="bg-zinc-200" />
