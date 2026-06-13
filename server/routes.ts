@@ -6,7 +6,7 @@ import { z } from "zod";
 import { db } from "./db";
 import { sql, eq } from "drizzle-orm";
 import { users } from "@shared/schema";
-import { sendOpportunityApplicationEmail, sendNewConnectionEmail } from "./mailer";
+import { sendOpportunityApplicationEmail, sendNewConnectionEmail, sendLoginNotificationEmail } from "./mailer";
 import multer from "multer";
 import { randomUUID } from "crypto";
 import { getUncachableStripeClient } from "./stripeClient";
@@ -88,6 +88,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Return user without password
       const { password: _, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
+
+      // Fire-and-forget login notification — never blocks the login response
+      if (user.email) {
+        sendLoginNotificationEmail({
+          recipientEmail: user.email,
+          recipientName: user.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : user.email,
+        }).catch((err) => {
+          console.error("[mailer] login notification failed:", err?.message ?? err);
+        });
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to authenticate" });
     }

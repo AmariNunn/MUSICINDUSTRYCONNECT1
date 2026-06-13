@@ -78,6 +78,69 @@ export async function sendOpportunityApplicationEmail({
   await mailerSend.email.send(params);
 }
 
+export async function sendLoginNotificationEmail({
+  recipientEmail,
+  recipientName,
+}: {
+  recipientEmail: string;
+  recipientName: string;
+}) {
+  const apiKey = process.env.MAILERSEND_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error("MAILERSEND_API_KEY is not configured");
+  }
+
+  const mailerSend = new MailerSend({ apiToken: apiKey });
+
+  const now = new Date();
+  const timestamp = now.toLocaleString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+      <div style="background:linear-gradient(135deg,#c084fc,#a855f7);padding:24px 32px;">
+        <h1 style="color:white;margin:0;font-size:22px;">Sign-In Notification</h1>
+        <p style="color:rgba(255,255,255,0.85);margin:4px 0 0;font-size:14px;">Music Industry Connect · MiC Is Hot</p>
+      </div>
+      <div style="padding:28px 32px;">
+        <p style="color:#374151;font-size:15px;margin-top:0;">Hi <strong>${recipientName}</strong>,</p>
+        <p style="color:#374151;font-size:15px;">We're letting you know that your Music Industry Connect account was just signed into.</p>
+
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin:20px 0;">
+          <h3 style="color:#c084fc;margin-top:0;">Sign-In Details</h3>
+          <p style="margin:0 0 8px;"><strong>Account:</strong> ${recipientEmail}</p>
+          <p style="margin:0;"><strong>Time:</strong> ${timestamp}</p>
+        </div>
+
+        <p style="color:#374151;font-size:15px;">If this was you, no action is needed — welcome back!</p>
+        <p style="color:#374151;font-size:15px;">If you did <strong>not</strong> sign in, please contact us immediately at <a href="mailto:hello@musicindustryconnect.com" style="color:#c084fc;">hello@musicindustryconnect.com</a> so we can secure your account.</p>
+
+        <p style="color:#6b7280;font-size:13px;margin-top:28px;border-top:1px solid #e5e7eb;padding-top:16px;">
+          You received this email because a sign-in occurred on your <a href="https://musicindustryconnect.com" style="color:#c084fc;">Music Industry Connect</a> account.
+        </p>
+      </div>
+    </div>
+  `;
+
+  const params = new EmailParams()
+    .setFrom(new Sender(FROM_EMAIL, FROM_NAME))
+    .setTo([new Recipient(recipientEmail, recipientName)])
+    .setSubject("New Sign-In to Your MiC Account")
+    .setHtml(html)
+    .setText(
+      `Hi ${recipientName},\n\nWe're letting you know that your Music Industry Connect account (${recipientEmail}) was signed into at ${timestamp}.\n\nIf this was you, no action is needed — welcome back!\n\nIf you did NOT sign in, please contact us at hello@musicindustryconnect.com immediately.`
+    );
+
+  await mailerSend.email.send(params);
+}
+
 export async function sendNewConnectionEmail({
   recipientEmail,
   recipientName,
