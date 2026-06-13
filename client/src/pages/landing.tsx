@@ -176,7 +176,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-black text-white py-20">
+      <section className="bg-black text-white pt-20 pb-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">
             <span className="text-[#c084fc]">Connect.</span> Create. <span className="text-white">Collaborate.</span>
@@ -201,20 +201,11 @@ export default function LandingPage() {
             </a>
           </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-[#c084fc]">{stat.value}</div>
-                <div className="text-sm md:text-base text-[#c084fc]/80">{stat.label}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-black">
+      <section className="py-8 sm:py-10 lg:py-12 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
