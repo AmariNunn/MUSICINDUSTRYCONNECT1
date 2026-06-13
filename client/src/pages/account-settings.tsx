@@ -225,12 +225,13 @@ export default function AccountSettings() {
                   <div className="space-y-2">
                     <Label htmlFor="fullName" className="flex items-center gap-2 text-zinc-600">
                       <User className="w-4 h-4 text-zinc-500" />
-                      Full Legal Name
+                      Full Name
                     </Label>
                     <Input
                       id="fullName"
                       value={personalInfo.fullName}
                       onChange={(e) => setPersonalInfo({...personalInfo, fullName: e.target.value})}
+                      placeholder="First Last"
                       className="bg-zinc-50 border-zinc-200 text-black placeholder:text-zinc-400 focus:border-[#c084fc] focus:ring-[#c084fc]"
                       data-testid="input-full-name"
                     />
