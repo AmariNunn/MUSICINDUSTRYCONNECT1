@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useUpgradeModal } from "@/hooks/use-upgrade-modal";
 import { LocationPicker } from "@/components/location-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -107,10 +108,10 @@ export default function AccountSettings() {
   useEffect(() => {
     if (currentUser) {
       setPersonalInfo({
-        fullName: currentUser.name || "",
+        fullName: `${currentUser.firstName || ""} ${currentUser.lastName || ""}`.trim(),
         dateOfBirth: "",
         contactEmail: currentUser.email || "",
-        phoneNumber: "",
+        phoneNumber: currentUser.phone || "",
         address: currentUser.location || ""
       });
     }
@@ -151,11 +152,39 @@ export default function AccountSettings() {
     contentFilters: []
   });
 
+  const savePersonalMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentUser) throw new Error("Not logged in");
+      const nameParts = personalInfo.fullName.trim().split(/\s+/);
+      const firstName = nameParts[0] || currentUser.firstName;
+      const lastName = nameParts.slice(1).join(" ") || currentUser.lastName;
+      const res = await apiRequest("PATCH", `/api/users/${currentUser.id}`, {
+        firstName,
+        lastName,
+        email: personalInfo.contactEmail,
+        phone: personalInfo.phoneNumber,
+        location: personalInfo.address,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Settings Saved",
+        description: "Your personal info has been updated successfully.",
+      });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "Save Failed",
+        description: err.message || "Could not save your changes. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSave = () => {
-    toast({
-      title: "Settings Saved",
-      description: "Your account settings have been updated successfully."
-    });
+    savePersonalMutation.mutate();
   };
 
   const handleChangePassword = async () => {
@@ -313,10 +342,11 @@ export default function AccountSettings() {
                 <div className="flex justify-end pt-4">
                   <Button 
                     onClick={handleSave}
-                    className="bg-[#c084fc] hover:bg-[#a855f7] text-white font-semibold"
+                    disabled={savePersonalMutation.isPending}
+                    className="bg-[#c084fc] hover:bg-[#a855f7] text-white font-semibold disabled:opacity-60"
                     data-testid="button-save-personal"
                   >
-                    Save Changes
+                    {savePersonalMutation.isPending ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
               </CardContent>
