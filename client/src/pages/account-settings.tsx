@@ -158,11 +158,29 @@ export default function AccountSettings() {
     });
   };
 
-  const handleChangePassword = () => {
-    toast({
-      title: "Password Reset Email Sent",
-      description: "Check your email for instructions to reset your password."
-    });
+  const handleChangePassword = async () => {
+    const email = currentUser?.email;
+    if (!email) {
+      toast({ title: "Not logged in", description: "Please sign in first.", variant: "destructive" });
+      return;
+    }
+    try {
+      await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      toast({
+        title: "Password Reset Email Sent",
+        description: "Check your inbox for a link to reset your password.",
+      });
+    } catch {
+      toast({
+        title: "Something went wrong",
+        description: "Couldn't send the reset email. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleLogoutAllDevices = () => {

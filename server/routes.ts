@@ -6,7 +6,8 @@ import { z } from "zod";
 import { db } from "./db";
 import { sql, eq } from "drizzle-orm";
 import { users } from "@shared/schema";
-import { sendOpportunityApplicationEmail, sendNewConnectionEmail, sendLoginNotificationEmail } from "./mailer";
+import { sendOpportunityApplicationEmail, sendNewConnectionEmail, sendLoginNotificationEmail, sendPasswordResetEmail } from "./mailer";
+import { randomBytes } from "crypto";
 import multer from "multer";
 import { randomUUID } from "crypto";
 import { getUncachableStripeClient } from "./stripeClient";
@@ -100,6 +101,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       res.status(500).json({ message: "Failed to authenticate" });
+    }
+  });
+
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      // Always return success to avoid user enumeration
+      const user = await storage.getUserByEmail(email);
+      if (user) {
+        // Invalidate any existing tokens for this user
+        await storage.deletePasswordResetTokensByUser(user.id);
+        const token = randomBytes(32).toString("hex");
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+        await storage.createPasswordResetToken(user.id, token, expiresAt);
+        const appUrl =
+          process.env.APP_URL ||
+          `${req.protocol}://${req.get("host")}`;
+        const resetLink = `${appUrl}/reset-password?token=${token}`;
+        sendPasswordResetEmail({
+          recipientEmail: user.email,
+          recipientName: user.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : user.email,
+          resetLink,
+        }).catch((err) => {
+          console.error("[mailer] password reset email failed:", err?.message ?? err);
+        });
+      }
+      res.json({ message: "If that email is registered, a reset link is on its way." });
+    } catch (error) {
+      res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      if (!token || !password) {
+        return res.status(400).json({ message: "Token and new password are required" });
+      }
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+      const record = await storage.getPasswordResetToken(token);
+      if (!record) {
+        return res.status(400).json({ message: "This reset link is invalid or has already been used." });
+      }
+      if (new Date() > record.expiresAt) {
+        await storage.deletePasswordResetToken(token);
+        return res.status(400).json({ message: "This reset link has expired. Please request a new one." });
+      }
+      await storage.updateUser(record.userId, { password });
+      await storage.deletePasswordResetToken(token);
+      res.json({ message: "Password updated successfully." });
+    } catch (error) {
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 

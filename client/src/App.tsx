@@ -10,6 +10,8 @@ import JoinPage from "@/pages/join";
 import CorePage from "@/pages/core-new";
 import LandingPage from "@/pages/landing";
 import LoginPage from "@/pages/login";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
 import ProfilePage from "@/pages/profile";
 import AccountSettingsPage from "@/pages/account-settings";
 import AdminPage from "@/pages/admin";
@@ -46,6 +48,8 @@ function Router() {
     <Switch>
       <Route path="/" component={LandingPage} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
       <Route>
         <ScrollToTop />
         <div className="min-h-screen bg-black">

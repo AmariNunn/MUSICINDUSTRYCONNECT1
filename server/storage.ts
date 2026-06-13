@@ -2,7 +2,7 @@ import { eq, or, ilike, sql, inArray } from "drizzle-orm";
 import { db } from "./db";
 import {
   users, posts, connections, favorites, comments,
-  galleryPosts, galleryItems,
+  galleryPosts, galleryItems, passwordResetTokens,
   type User, type InsertUser, type Post, type InsertPost,
   type Connection, type InsertConnection, type Favorite,
   type InsertFavorite, type Comment, type InsertComment,
@@ -56,6 +56,11 @@ export interface IStorage {
   getGalleryPostsByUser(userId: number): Promise<GalleryPostWithItems[]>;
   getGalleryPostById(id: number): Promise<GalleryPost | undefined>;
   deleteGalleryPost(id: number): Promise<boolean>;
+
+  createPasswordResetToken(userId: number, token: string, expiresAt: Date): Promise<void>;
+  getPasswordResetToken(token: string): Promise<{ userId: number; expiresAt: Date } | undefined>;
+  deletePasswordResetToken(token: string): Promise<void>;
+  deletePasswordResetTokensByUser(userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -385,6 +390,28 @@ export class DatabaseStorage implements IStorage {
     await db.delete(galleryItems).where(eq(galleryItems.postId, id));
     const result = await db.delete(galleryPosts).where(eq(galleryPosts.id, id)).returning();
     return result.length > 0;
+  }
+
+  async createPasswordResetToken(userId: number, token: string, expiresAt: Date): Promise<void> {
+    await db.insert(passwordResetTokens).values({ userId, token, expiresAt });
+  }
+
+  async getPasswordResetToken(token: string): Promise<{ userId: number; expiresAt: Date } | undefined> {
+    const result = await db
+      .select()
+      .from(passwordResetTokens)
+      .where(eq(passwordResetTokens.token, token))
+      .limit(1);
+    if (!result[0]) return undefined;
+    return { userId: result[0].userId, expiresAt: result[0].expiresAt };
+  }
+
+  async deletePasswordResetToken(token: string): Promise<void> {
+    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.token, token));
+  }
+
+  async deletePasswordResetTokensByUser(userId: number): Promise<void> {
+    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
   }
 }
 

@@ -141,6 +141,62 @@ export async function sendLoginNotificationEmail({
   await mailerSend.email.send(params);
 }
 
+export async function sendPasswordResetEmail({
+  recipientEmail,
+  recipientName,
+  resetLink,
+}: {
+  recipientEmail: string;
+  recipientName: string;
+  resetLink: string;
+}) {
+  const apiKey = process.env.MAILERSEND_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error("MAILERSEND_API_KEY is not configured");
+  }
+
+  const mailerSend = new MailerSend({ apiToken: apiKey });
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+      <div style="background:linear-gradient(135deg,#c084fc,#a855f7);padding:24px 32px;">
+        <h1 style="color:white;margin:0;font-size:22px;">Reset Your Password</h1>
+        <p style="color:rgba(255,255,255,0.85);margin:4px 0 0;font-size:14px;">Music Industry Connect · MiC Is Hot</p>
+      </div>
+      <div style="padding:28px 32px;">
+        <p style="color:#374151;font-size:15px;margin-top:0;">Hi <strong>${recipientName}</strong>,</p>
+        <p style="color:#374151;font-size:15px;">We received a request to reset the password for your Music Industry Connect account. Click the button below to choose a new password:</p>
+
+        <div style="text-align:center;margin:28px 0;">
+          <a href="${resetLink}" style="display:inline-block;background:linear-gradient(135deg,#c084fc,#a855f7);color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:bold;">Reset My Password</a>
+        </div>
+
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:20px 0;">
+          <p style="margin:0;font-size:13px;color:#6b7280;">If the button above doesn't work, copy and paste this link into your browser:</p>
+          <p style="margin:8px 0 0;font-size:13px;color:#c084fc;word-break:break-all;">${resetLink}</p>
+        </div>
+
+        <p style="color:#374151;font-size:15px;">This link will expire in <strong>1 hour</strong>. If you didn't request a password reset, you can safely ignore this email — your password will not change.</p>
+
+        <p style="color:#6b7280;font-size:13px;margin-top:28px;border-top:1px solid #e5e7eb;padding-top:16px;">
+          You received this email because a password reset was requested for your <a href="https://musicindustryconnect.com" style="color:#c084fc;">Music Industry Connect</a> account.
+        </p>
+      </div>
+    </div>
+  `;
+
+  const params = new EmailParams()
+    .setFrom(new Sender(FROM_EMAIL, FROM_NAME))
+    .setTo([new Recipient(recipientEmail, recipientName)])
+    .setSubject("Reset Your MiC Password")
+    .setHtml(html)
+    .setText(
+      `Hi ${recipientName},\n\nWe received a request to reset your Music Industry Connect password.\n\nReset your password here: ${resetLink}\n\nThis link expires in 1 hour. If you didn't request this, ignore this email.`
+    );
+
+  await mailerSend.email.send(params);
+}
+
 export async function sendNewConnectionEmail({
   recipientEmail,
   recipientName,
