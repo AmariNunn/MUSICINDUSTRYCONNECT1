@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { compressImage } from "@/lib/compressImage";
 import type { User } from "@shared/schema";
 import { getGenreBadge, getProfessionBadge } from "@/lib/badges";
 import goldBadge from "@assets/Gold_Level-removebg-preview_1762468528106.png";
@@ -325,8 +326,10 @@ export default function ProfilePage() {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !currentUser?.id) return;
+    const raw = e.target.files?.[0];
+    if (!raw || !currentUser?.id) return;
+
+    const file = raw.type.startsWith("image/") ? await compressImage(raw) : raw;
 
     // Show an instant local preview while the upload is in flight
     const reader = new FileReader();
@@ -412,9 +415,10 @@ export default function ProfilePage() {
     setEditPortfolio([...editPortfolio, { title: "New Track", name: "", subtitle: "", image: "" }]);
   };
 
-  const handlePortfolioImageUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  const handlePortfolioImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.files?.[0];
+    if (raw) {
+      const file = raw.type.startsWith("image/") ? await compressImage(raw) : raw;
       const reader = new FileReader();
       reader.onload = (event) => {
         const updated = [...editPortfolio];

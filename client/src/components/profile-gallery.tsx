@@ -20,6 +20,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import type { GalleryPostWithItems } from "@shared/schema";
+import { compressImage } from "@/lib/compressImage";
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
@@ -251,35 +252,38 @@ export function ProfileGallery({ profileUserId, isOwner }: ProfileGalleryProps) 
       });
     }
 
-    const accepted: DraftItem[] = [];
-    for (const file of files.slice(0, remaining)) {
-      const isImage = file.type.startsWith("image/");
-      const isVideo = file.type.startsWith("video/");
-      if (!isImage && !isVideo) {
-        toast({
-          title: "Unsupported file",
-          description: `${file.name} isn't a photo or video.`,
-          variant: "destructive",
-        });
-        continue;
-      }
-      const limit = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
-      if (file.size > limit) {
-        toast({
-          title: "File too large",
-          description: `${file.name} exceeds ${isVideo ? "50MB" : "10MB"} limit.`,
-          variant: "destructive",
-        });
-        continue;
-      }
-      accepted.push({
-        id: `${file.name}-${file.size}-${Math.random()}`,
-        file,
-        previewUrl: URL.createObjectURL(file),
-        mediaType: isVideo ? "video" : "image",
-        caption: "",
-      });
-    }
+    const results = await Promise.all(
+      files.slice(0, remaining).map(async (raw) => {
+        const isImage = raw.type.startsWith("image/");
+        const isVideo = raw.type.startsWith("video/");
+        if (!isImage && !isVideo) {
+          toast({
+            title: "Unsupported file",
+            description: `${raw.name} isn't a photo or video.`,
+            variant: "destructive",
+          });
+          return null;
+        }
+        const file = isImage ? await compressImage(raw) : raw;
+        const limit = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+        if (file.size > limit) {
+          toast({
+            title: "File too large",
+            description: `${raw.name} exceeds ${isVideo ? "50MB" : "10MB"} limit.`,
+            variant: "destructive",
+          });
+          return null;
+        }
+        return {
+          id: `${raw.name}-${raw.size}-${Math.random()}`,
+          file,
+          previewUrl: URL.createObjectURL(file),
+          mediaType: (isVideo ? "video" : "image") as "video" | "image",
+          caption: "",
+        };
+      })
+    );
+    const accepted = results.filter(Boolean) as DraftItem[];
     if (accepted.length > 0) setDrafts((prev) => [...prev, ...accepted]);
   };
 
