@@ -64,6 +64,7 @@ export default function CorePage() {
   const [applicationAnswers, setApplicationAnswers] = useState<Record<number, string>>({});
   const [postContent, setPostContent] = useState("");
   const [postImage, setPostImage] = useState<string | null>(null);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [opportunityContent, setOpportunityContent] = useState("");
   const [opportunityIsPaid, setOpportunityIsPaid] = useState(true);
   const [opportunityQuestions, setOpportunityQuestions] = useState<string[]>([]);
@@ -516,7 +517,8 @@ export default function CorePage() {
                                 <img
                                   src={(post as any).image}
                                   alt="Post image"
-                                  className="rounded-xl max-h-80 w-full object-cover mb-4 border border-[#c084fc]/20"
+                                  className="rounded-xl max-h-52 max-w-full object-contain mb-4 border border-[#c084fc]/20 cursor-pointer hover:opacity-90 transition-opacity"
+                                  onClick={() => setExpandedImage((post as any).image)}
                                 />
                               )}
                               
@@ -1004,7 +1006,15 @@ export default function CorePage() {
                                     </div>
                                   )}
                                 </div>
-                                <p className="text-gray-700 text-sm mb-3 leading-relaxed">{post.content}</p>
+                                <p className="text-gray-700 text-sm mb-3 leading-relaxed">{post.content.replace(/\n?\[Image attached\]/g, '').trim()}</p>
+                                {(post as any).image && (
+                                  <img
+                                    src={(post as any).image}
+                                    alt="Post image"
+                                    className="rounded-xl max-h-40 max-w-full object-contain mb-3 border border-[#c084fc]/20 cursor-pointer hover:opacity-90 transition-opacity"
+                                    onClick={() => setExpandedImage((post as any).image)}
+                                  />
+                                )}
                                 <div className="flex items-center gap-2">
                                   <button 
                                     onClick={() => handleLike(post.id)}
@@ -2616,6 +2626,23 @@ export default function CorePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Image Lightbox */}
+      <Dialog open={!!expandedImage} onOpenChange={() => setExpandedImage(null)}>
+        <DialogContent className="max-w-4xl bg-black/95 border-0 p-2">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Image Preview</DialogTitle>
+          </DialogHeader>
+          {expandedImage && (
+            <img
+              src={expandedImage}
+              alt="Full size"
+              className="w-full max-h-[85vh] object-contain rounded-lg"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
         </div>
       </div>
     </div>

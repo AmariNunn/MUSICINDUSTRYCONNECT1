@@ -343,7 +343,14 @@ export default function HomePage() {
                             <h4 className="font-bold text-white text-sm">{post.author.firstName} {post.author.lastName}</h4>
                             <span className="text-xs text-purple-400">{formatTimeAgo(new Date(post.createdAt))}</span>
                           </div>
-                          <p className="text-purple-100 mb-3 text-sm leading-relaxed">{post.content}</p>
+                          <p className="text-purple-100 mb-3 text-sm leading-relaxed">{post.content.replace(/\n?\[Image attached\]/g, '').trim()}</p>
+                          {(post as any).image && (
+                            <img
+                              src={(post as any).image}
+                              alt="Post image"
+                              className="rounded-lg max-h-32 max-w-full object-contain mb-3 border border-purple-500/20"
+                            />
+                          )}
                           <div className="flex items-center space-x-4 text-xs">
                             <button className="flex items-center text-purple-300 hover:text-red-400 transition-colors">
                               <Heart className="w-3 h-3 mr-1" />
