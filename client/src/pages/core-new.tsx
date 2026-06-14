@@ -29,10 +29,14 @@ import {
   X,
   ExternalLink,
   ChevronLeft,
-  Trash2
+  Trash2,
+  Heart,
+  MessageCircle,
+  Send as SendIcon,
+  Lock,
+  Image as ImageIcon
 } from "lucide-react";
 import type { User, Post, Comment } from "@shared/schema";
-import { Heart, MessageCircle, Send as SendIcon, Lock } from "lucide-react";
 import { getGenreBadge, getProfessionBadge } from "@/lib/badges";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +63,7 @@ export default function CorePage() {
   const [applicationPhone, setApplicationPhone] = useState("");
   const [applicationAnswers, setApplicationAnswers] = useState<Record<number, string>>({});
   const [postContent, setPostContent] = useState("");
+  const [postImage, setPostImage] = useState<string | null>(null);
   const [opportunityContent, setOpportunityContent] = useState("");
   const [opportunityIsPaid, setOpportunityIsPaid] = useState(true);
   const [opportunityQuestions, setOpportunityQuestions] = useState<string[]>([]);
@@ -176,13 +181,14 @@ export default function CorePage() {
   };
 
   const createPostMutation = useMutation({
-    mutationFn: async (data: { content: string; type: string; userId: number }) => {
+    mutationFn: async (data: { content: string; type: string; userId: number; image?: string }) => {
       const res = await apiRequest("POST", "/api/posts", data);
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       setPostContent("");
+      setPostImage(null);
       setShowCreatePostDialog(false);
       toast({ title: "Post created!", description: "Your post has been shared with the community." });
     },
@@ -505,7 +511,14 @@ export default function CorePage() {
                                   {new Date(post.createdAt).toLocaleDateString()}
                                 </span>
                               </div>
-                              <p className="text-gray-700 mb-4">{post.content}</p>
+                              <p className="text-gray-700 mb-4">{post.content.replace(/\n?\[Image attached\]/g, '').trim()}</p>
+                              {(post as any).image && (
+                                <img
+                                  src={(post as any).image}
+                                  alt="Post image"
+                                  className="rounded-xl max-h-80 w-full object-cover mb-4 border border-[#c084fc]/20"
+                                />
+                              )}
                               
                               {/* Like and Comment buttons */}
                               <div className="flex items-center gap-3 text-sm">
@@ -2285,6 +2298,33 @@ export default function CorePage() {
                 data-testid="input-post-content"
               />
             </div>
+            {postImage && (
+              <div className="relative inline-block">
+                <img src={postImage} alt="Preview" className="max-h-48 rounded-xl object-cover border border-[#c084fc]/20" />
+                <button
+                  onClick={() => setPostImage(null)}
+                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+            <label className="cursor-pointer flex items-center gap-2 text-[#c084fc] hover:text-[#a855f7] transition-colors w-fit">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (ev) => setPostImage(ev.target?.result as string);
+                  reader.readAsDataURL(file);
+                }}
+              />
+              <ImageIcon className="w-4 h-4" />
+              <span className="text-sm font-medium">Add Photo</span>
+            </label>
           </div>
 
           <div className="mt-6 flex gap-3">
@@ -2293,6 +2333,7 @@ export default function CorePage() {
               onClick={() => {
                 setShowCreatePostDialog(false);
                 setPostContent("");
+                setPostImage(null);
               }}
               className="flex-1 border-[#c084fc] text-[#c084fc] hover:bg-[#c084fc]/10"
             >
@@ -2300,15 +2341,16 @@ export default function CorePage() {
             </Button>
             <Button
               onClick={() => {
-                if (postContent.trim() && currentUser) {
+                if ((postContent.trim() || postImage) && currentUser) {
                   createPostMutation.mutate({
                     content: postContent.trim(),
                     type: "post",
-                    userId: currentUser.id
+                    userId: currentUser.id,
+                    ...(postImage ? { image: postImage } : {}),
                   });
                 }
               }}
-              disabled={!postContent.trim() || createPostMutation.isPending}
+              disabled={(!postContent.trim() && !postImage) || createPostMutation.isPending}
               className="flex-1 bg-[#c084fc] hover:bg-[#c084fc]/90 text-white"
               data-testid="button-submit-post"
             >

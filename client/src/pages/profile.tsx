@@ -466,9 +466,10 @@ export default function ProfilePage() {
     if (currentUser?.memberLevel === "Gold" || currentUser?.memberLevel === "Platinum") {
       createPostMutation.mutate({
         userId: currentUser.id,
-        content: newPostContent.trim() + (newPostImage ? `\n[Image attached]` : ""),
+        content: newPostContent.trim(),
         type: "post",
-      });
+        ...(newPostImage ? { image: newPostImage } : {}),
+      } as any);
     } else {
       openUpgradeModal();
     }
