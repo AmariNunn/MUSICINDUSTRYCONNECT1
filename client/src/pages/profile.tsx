@@ -99,7 +99,7 @@ export default function ProfilePage() {
 
   // Edit form state
   const [editBio, setEditBio] = useState("");
-  const [editPortfolio, setEditPortfolio] = useState<{title: string; name: string; subtitle: string; image?: string}[]>([]);
+  const [editPortfolio, setEditPortfolio] = useState<{title: string; name: string; subtitle: string; image?: string; link?: string}[]>([]);
   const [editSocialLinks, setEditSocialLinks] = useState<{platform: string; url: string}[]>([]);
   const [editMusicLinks, setEditMusicLinks] = useState<{platform: string; url: string}[]>([]);
   const [editProfessions, setEditProfessions] = useState<string[]>([]);
@@ -278,6 +278,24 @@ export default function ProfilePage() {
     }
   });
 
+  const updateSectionMutation = useMutation({
+    mutationFn: async (data: Partial<User>) => {
+      const userId = currentUser?.id;
+      if (!userId) throw new Error("User ID not found");
+      const response = await apiRequest("PATCH", `/api/users/${userId}`, data);
+      const json = await response.json();
+      return json;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({ title: "Saved!", description: "Section saved successfully." });
+    },
+    onError: (error: any) => {
+      console.error("Section save error:", error);
+      toast({ title: "Error", description: "Failed to save. Please try again.", variant: "destructive" });
+    }
+  });
+
   if (!currentUser) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -322,28 +340,36 @@ export default function ProfilePage() {
 
 
 
+  const buildProfileUpdates = (): Partial<User> => ({
+    bio: editBio || "",
+    profession: editProfessions,
+    genre: editGenres,
+    socialInstagram: editSocialLinks.find(l => l.platform === "Instagram")?.url || "",
+    socialTwitter: editSocialLinks.find(l => l.platform === "Twitter")?.url || "",
+    website: editSocialLinks.find(l => l.platform === "Website")?.url || "",
+    musicSpotify: editMusicLinks.find(l => l.platform === "Spotify")?.url || "",
+    musicSoundcloud: editMusicLinks.find(l => l.platform === "SoundCloud")?.url || "",
+    musicAppleMusic: editMusicLinks.find(l => l.platform === "Apple Music")?.url || "",
+    musicBandcamp: editMusicLinks.find(l => l.platform === "Bandcamp")?.url || "",
+    portfolio: JSON.stringify(editPortfolio),
+  });
+
   const handleSave = () => {
     if (!currentUser?.id) {
       toast({ title: "Error", description: "User not found. Please refresh and try again.", variant: "destructive" });
       return;
     }
-    
-    const updates: Partial<User> = {
-      bio: editBio || "",
-      profession: editProfessions,
-      genre: editGenres,
-      socialInstagram: editSocialLinks.find(l => l.platform === "Instagram")?.url || "",
-      socialTwitter: editSocialLinks.find(l => l.platform === "Twitter")?.url || "",
-      website: editSocialLinks.find(l => l.platform === "Website")?.url || "",
-      musicSpotify: editMusicLinks.find(l => l.platform === "Spotify")?.url || "",
-      musicSoundcloud: editMusicLinks.find(l => l.platform === "SoundCloud")?.url || "",
-      musicAppleMusic: editMusicLinks.find(l => l.platform === "Apple Music")?.url || "",
-      musicBandcamp: editMusicLinks.find(l => l.platform === "Bandcamp")?.url || "",
-      portfolio: JSON.stringify(editPortfolio),
-    };
-    
+    const updates = buildProfileUpdates();
     console.log("Saving profile updates for user", currentUser.id, updates);
     updateProfileMutation.mutate(updates);
+  };
+
+  const handleSaveSection = () => {
+    if (!currentUser?.id) {
+      toast({ title: "Error", description: "User not found. Please refresh and try again.", variant: "destructive" });
+      return;
+    }
+    updateSectionMutation.mutate(buildProfileUpdates());
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -704,7 +730,7 @@ export default function ProfilePage() {
                   {(() => {
                     try {
                       const portfolio = currentUser.portfolio ? JSON.parse(currentUser.portfolio) : [];
-                      return portfolio.length > 0 ? portfolio.map((item: {title: string; name: string; subtitle: string; image?: string}, index: number) => (
+                      return portfolio.length > 0 ? portfolio.map((item: {title: string; name: string; subtitle: string; image?: string; link?: string}, index: number) => (
                         <div key={index} className="p-4 bg-gradient-to-br from-[#c084fc]/10 via-white to-[#c084fc]/20 rounded-xl hover:from-[#c084fc]/20 hover:to-[#c084fc]/30 transition-all duration-300 hover:scale-105 transform hover:shadow-lg border border-[#c084fc]/30 hover:border-[#c084fc]/50 group/track cursor-pointer">
                           <div className="flex gap-4 items-start">
                             {item.image && (
@@ -717,10 +743,35 @@ export default function ProfilePage() {
                                 <h4 className="font-bold text-[#c084fc] group-hover/track:text-[#c084fc] transition-colors duration-300">{item.title}</h4>
                                 <div className="flex items-center space-x-2">
                                   <div className={`w-2 h-2 ${index === 0 ? 'bg-red-400' : 'bg-yellow-400'} rounded-full animate-pulse`}></div>
-                                  <ExternalLink className="w-4 h-4 text-[#c084fc] group-hover/track:scale-125 group-hover/track:rotate-12 transition-all duration-300" />
+                                  {item.link && (
+                                    <a
+                                      href={item.link.startsWith("http") ? item.link : `https://${item.link}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="text-[#c084fc] hover:text-[#a855f7]"
+                                      data-testid={`link-portfolio-${index}`}
+                                    >
+                                      <ExternalLink className="w-4 h-4 group-hover/track:scale-125 group-hover/track:rotate-12 transition-all duration-300" />
+                                    </a>
+                                  )}
+                                  {!item.link && <ExternalLink className="w-4 h-4 text-[#c084fc] group-hover/track:scale-125 group-hover/track:rotate-12 transition-all duration-300" />}
                                 </div>
                               </div>
-                              <p className="text-gray-900 font-bold text-sm group-hover/track:text-[#c084fc] transition-colors duration-300">"{item.name}"</p>
+                              {item.link ? (
+                                <a
+                                  href={item.link.startsWith("http") ? item.link : `https://${item.link}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-gray-900 font-bold text-sm group-hover/track:text-[#c084fc] transition-colors duration-300 hover:underline"
+                                  data-testid={`link-portfolio-name-${index}`}
+                                >
+                                  "{item.name}"
+                                </a>
+                              ) : (
+                                <p className="text-gray-900 font-bold text-sm group-hover/track:text-[#c084fc] transition-colors duration-300">"{item.name}"</p>
+                              )}
                               <p className="text-xs text-[#c084fc] font-semibold">{item.subtitle}</p>
                             </div>
                           </div>
@@ -1231,6 +1282,14 @@ export default function ProfilePage() {
                       )}
                     </div>
                   </div>
+                  <button
+                    onClick={handleSaveSection}
+                    disabled={updateSectionMutation.isPending}
+                    className="mt-[3vw] w-full py-[2.5vw] bg-[#c084fc] text-white rounded-[2.5vw] text-[3.5vw] font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
+                    data-testid="button-save-picture-section"
+                  >
+                    {updateSectionMutation.isPending ? "Saving..." : "Save Profile Picture"}
+                  </button>
                 </div>
 
                 {/* Profession Section */}
@@ -1261,6 +1320,14 @@ export default function ProfilePage() {
                   {editProfessions.length > 0 && (
                     <p className="text-[3vw] text-[#c084fc] mt-[2vw]">Selected: {editProfessions.join(", ")}</p>
                   )}
+                  <button
+                    onClick={handleSaveSection}
+                    disabled={updateSectionMutation.isPending}
+                    className="mt-[3vw] w-full py-[2.5vw] bg-[#c084fc] text-white rounded-[2.5vw] text-[3.5vw] font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
+                    data-testid="button-save-profession-section"
+                  >
+                    {updateSectionMutation.isPending ? "Saving..." : "Save Profession"}
+                  </button>
                 </div>
 
                 {/* Genre Section */}
@@ -1291,6 +1358,14 @@ export default function ProfilePage() {
                   {editGenres.length > 0 && (
                     <p className="text-[3vw] text-[#c084fc] mt-[2vw]">Selected: {editGenres.join(", ")}</p>
                   )}
+                  <button
+                    onClick={handleSaveSection}
+                    disabled={updateSectionMutation.isPending}
+                    className="mt-[3vw] w-full py-[2.5vw] bg-[#c084fc] text-white rounded-[2.5vw] text-[3.5vw] font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
+                    data-testid="button-save-genre-section"
+                  >
+                    {updateSectionMutation.isPending ? "Saving..." : "Save Genre"}
+                  </button>
                 </div>
 
                 {/* Portfolio Section */}
@@ -1393,9 +1468,28 @@ export default function ProfilePage() {
                           className="w-full text-[3.2vw] h-[10vw] border-[#c084fc]/20 bg-white text-black"
                           data-testid={`input-portfolio-subtitle-${index}`}
                         />
+                        <Input
+                          value={item.link || ""}
+                          onChange={(e) => {
+                            const updated = [...editPortfolio];
+                            updated[index].link = e.target.value;
+                            setEditPortfolio(updated);
+                          }}
+                          placeholder="Add a link — Spotify, SoundCloud, YouTube…"
+                          className="w-full text-[3.2vw] h-[10vw] mt-[2vw] border-[#c084fc]/20 bg-white text-black"
+                          data-testid={`input-portfolio-link-${index}`}
+                        />
                       </div>
                     ))}
                   </div>
+                  <button
+                    onClick={handleSaveSection}
+                    disabled={updateSectionMutation.isPending}
+                    className="mt-[3vw] w-full py-[2.5vw] bg-[#c084fc] text-white rounded-[2.5vw] text-[3.5vw] font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
+                    data-testid="button-save-portfolio-section"
+                  >
+                    {updateSectionMutation.isPending ? "Saving..." : "Save Portfolio"}
+                  </button>
                 </div>
 
                 {/* Social Links Section */}
@@ -1456,6 +1550,14 @@ export default function ProfilePage() {
                       <p className="text-black/50 text-[3.5vw] text-center py-[4vw]">No social links added yet</p>
                     )}
                   </div>
+                  <button
+                    onClick={handleSaveSection}
+                    disabled={updateSectionMutation.isPending}
+                    className="mt-[3vw] w-full py-[2.5vw] bg-[#c084fc] text-white rounded-[2.5vw] text-[3.5vw] font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
+                    data-testid="button-save-social-section"
+                  >
+                    {updateSectionMutation.isPending ? "Saving..." : "Save Social Links"}
+                  </button>
                 </div>
 
                 {/* Music Platform Links Section */}
@@ -1505,6 +1607,14 @@ export default function ProfilePage() {
                       <p className="text-black/50 text-[3.5vw] text-center py-[4vw]">No music platforms added yet</p>
                     )}
                   </div>
+                  <button
+                    onClick={handleSaveSection}
+                    disabled={updateSectionMutation.isPending}
+                    className="mt-[3vw] w-full py-[2.5vw] bg-[#c084fc] text-white rounded-[2.5vw] text-[3.5vw] font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
+                    data-testid="button-save-music-section"
+                  >
+                    {updateSectionMutation.isPending ? "Saving..." : "Save Music Platforms"}
+                  </button>
                 </div>
 
 
@@ -1592,6 +1702,16 @@ export default function ProfilePage() {
                       )}
                     </div>
                   </div>
+                  <div className="flex justify-end mt-3">
+                    <button
+                      onClick={handleSaveSection}
+                      disabled={updateSectionMutation.isPending}
+                      className="px-4 py-2 bg-[#c084fc] text-white rounded-lg text-sm font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
+                      data-testid="button-save-picture-section-desktop"
+                    >
+                      {updateSectionMutation.isPending ? "Saving..." : "Save Profile Picture"}
+                    </button>
+                  </div>
                 </div>
 
                 {/* About */}
@@ -1630,6 +1750,16 @@ export default function ProfilePage() {
                   {editProfessions.length > 0 && (
                     <p className="text-xs text-[#c084fc] mt-2">Selected: {editProfessions.join(", ")}</p>
                   )}
+                  <div className="flex justify-end mt-3">
+                    <button
+                      onClick={handleSaveSection}
+                      disabled={updateSectionMutation.isPending}
+                      className="px-4 py-2 bg-[#c084fc] text-white rounded-lg text-sm font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
+                      data-testid="button-save-profession-section-desktop"
+                    >
+                      {updateSectionMutation.isPending ? "Saving..." : "Save Profession"}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Genre */}
@@ -1656,6 +1786,16 @@ export default function ProfilePage() {
                   {editGenres.length > 0 && (
                     <p className="text-xs text-[#c084fc] mt-2">Selected: {editGenres.join(", ")}</p>
                   )}
+                  <div className="flex justify-end mt-3">
+                    <button
+                      onClick={handleSaveSection}
+                      disabled={updateSectionMutation.isPending}
+                      className="px-4 py-2 bg-[#c084fc] text-white rounded-lg text-sm font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
+                      data-testid="button-save-genre-section-desktop"
+                    >
+                      {updateSectionMutation.isPending ? "Saving..." : "Save Genre"}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Portfolio */}
@@ -1719,7 +1859,7 @@ export default function ProfilePage() {
                             )}
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-2 gap-2 mb-2">
                           <Input
                             value={item.name}
                             onChange={(e) => {
@@ -1741,8 +1881,29 @@ export default function ProfilePage() {
                             className="border-[#c084fc]/20 bg-white text-black"
                           />
                         </div>
+                        <Input
+                          value={item.link || ""}
+                          onChange={(e) => {
+                            const updated = [...editPortfolio];
+                            updated[index].link = e.target.value;
+                            setEditPortfolio(updated);
+                          }}
+                          placeholder="Add a link — Spotify, SoundCloud, YouTube…"
+                          className="w-full border-[#c084fc]/20 bg-white text-black"
+                          data-testid={`input-portfolio-link-desktop-${index}`}
+                        />
                       </div>
                     ))}
+                  </div>
+                  <div className="flex justify-end mt-3">
+                    <button
+                      onClick={handleSaveSection}
+                      disabled={updateSectionMutation.isPending}
+                      className="px-4 py-2 bg-[#c084fc] text-white rounded-lg text-sm font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
+                      data-testid="button-save-portfolio-section-desktop"
+                    >
+                      {updateSectionMutation.isPending ? "Saving..." : "Save Portfolio"}
+                    </button>
                   </div>
                 </div>
 
@@ -1774,6 +1935,16 @@ export default function ProfilePage() {
                       </div>
                     ))}
                   </div>
+                  <div className="flex justify-end mt-3">
+                    <button
+                      onClick={handleSaveSection}
+                      disabled={updateSectionMutation.isPending}
+                      className="px-4 py-2 bg-[#c084fc] text-white rounded-lg text-sm font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
+                      data-testid="button-save-social-section-desktop"
+                    >
+                      {updateSectionMutation.isPending ? "Saving..." : "Save Social Links"}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Music Platforms */}
@@ -1803,6 +1974,16 @@ export default function ProfilePage() {
                         </button>
                       </div>
                     ))}
+                  </div>
+                  <div className="flex justify-end mt-3">
+                    <button
+                      onClick={handleSaveSection}
+                      disabled={updateSectionMutation.isPending}
+                      className="px-4 py-2 bg-[#c084fc] text-white rounded-lg text-sm font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
+                      data-testid="button-save-music-section-desktop"
+                    >
+                      {updateSectionMutation.isPending ? "Saving..." : "Save Music Platforms"}
+                    </button>
                   </div>
                 </div>
 
