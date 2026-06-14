@@ -532,38 +532,6 @@ export default function CorePage() {
                               {/* Comments Section */}
                               {expandedComments === post.id && (
                                 <div className="mt-4 pt-4 border-t border-[#c084fc]/20 space-y-4">
-                                  {/* Comment Input */}
-                                  <div className="flex gap-3 items-start">
-                                    <div className="w-8 h-8 bg-gradient-to-br from-[#c084fc] to-[#c084fc]/70 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 overflow-hidden">
-                                      {(currentUser?.avatar?.startsWith('data:') || currentUser?.avatar?.startsWith('/api/avatar/')) ? (
-                                        <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
-                                      ) : (
-                                        currentUser?.avatar || "?"
-                                      )}
-                                    </div>
-                                    <div className="flex-1 relative">
-                                      <Input
-                                        value={commentInputs[post.id] || ""}
-                                        onChange={(e) => handleCommentInputChange(post.id, e.target.value)}
-                                        placeholder="Write a comment..."
-                                        className="pr-12 bg-gray-50 border-[#c084fc]/20 focus:border-[#c084fc] focus:ring-[#c084fc]/20 rounded-full"
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter' && !e.shiftKey) {
-                                            e.preventDefault();
-                                            handleSubmitComment(post.id);
-                                          }
-                                        }}
-                                      />
-                                      <button
-                                        onClick={() => handleSubmitComment(post.id)}
-                                        disabled={!commentInputs[post.id]?.trim() || commentMutation.isPending}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-[#c084fc] hover:bg-[#c084fc]/90 text-white rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                      >
-                                        <SendIcon className="w-4 h-4" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                  
                                   {/* Comments List */}
                                   {loadingComments === post.id ? (
                                     <div className="flex items-center justify-center py-4">
@@ -595,6 +563,38 @@ export default function CorePage() {
                                   ) : (
                                     <p className="text-center text-gray-500 text-sm py-4">No comments yet. Be the first to comment!</p>
                                   )}
+
+                                  {/* Comment Input */}
+                                  <div className="flex gap-3 items-start">
+                                    <div className="w-8 h-8 bg-gradient-to-br from-[#c084fc] to-[#c084fc]/70 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 overflow-hidden">
+                                      {(currentUser?.avatar?.startsWith('data:') || currentUser?.avatar?.startsWith('/api/avatar/')) ? (
+                                        <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
+                                      ) : (
+                                        currentUser?.avatar || "?"
+                                      )}
+                                    </div>
+                                    <div className="flex-1 relative">
+                                      <Input
+                                        value={commentInputs[post.id] || ""}
+                                        onChange={(e) => handleCommentInputChange(post.id, e.target.value)}
+                                        placeholder="Write a comment..."
+                                        className="pr-12 bg-gray-50 border-[#c084fc]/20 focus:border-[#c084fc] focus:ring-[#c084fc]/20 rounded-full text-black"
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSubmitComment(post.id);
+                                          }
+                                        }}
+                                      />
+                                      <button
+                                        onClick={() => handleSubmitComment(post.id)}
+                                        disabled={!commentInputs[post.id]?.trim() || commentMutation.isPending}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-[#c084fc] hover:bg-[#c084fc]/90 text-white rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                      >
+                                        <SendIcon className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </div>
                                 </div>
                               )}
                             </div>
