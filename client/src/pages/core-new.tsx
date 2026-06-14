@@ -45,7 +45,7 @@ import goldBadge from "@assets/Gold_Level-removebg-preview_1762468528106.png";
 import platinumBadge from "@assets/Platinum Level_1762468203581.png";
 
 export default function CorePage() {
-  const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [activeModal, setActiveModal] = useState<string | null>("community");
   const [showTermsDialog, setShowTermsDialog] = useState(false);
   const [showArticlesDialog, setShowArticlesDialog] = useState(false);
   const [showCompaniesDialog, setShowCompaniesDialog] = useState(false);
