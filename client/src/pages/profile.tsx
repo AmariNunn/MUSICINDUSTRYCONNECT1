@@ -719,8 +719,9 @@ export default function ProfilePage() {
         {/* Main Content */}
         <div className="grid grid-cols-2 gap-3 md:gap-6 lg:gap-8 px-4 md:px-6 lg:px-0 items-start">
           {/* Left Column - Bio & Stats */}
-          <div className="flex flex-col gap-4 md:gap-6">
-            {/* Music Portfolio - Moved from center */}
+          <div className="flex flex-col gap-3 md:gap-4">
+            <div className="grid grid-cols-2 gap-3 items-start">
+            {/* Music Portfolio */}
             <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm hover:shadow-3xl transition-all duration-500 transform hover:-translate-y-1 hover:scale-[1.02] group">
               <CardHeader className="bg-gradient-to-r from-[#c084fc] via-[#c084fc] to-[#c084fc] text-white rounded-t-lg relative overflow-hidden p-4 md:p-6">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 group-hover:translate-x-full transition-transform duration-1000"></div>
@@ -866,6 +867,7 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
             )}
+            </div>
           </div>
 
           {/* Center Column - Activity Feed */}
