@@ -23,7 +23,7 @@ export async function sendOpportunityApplicationEmail({
     throw new Error("MAILERSEND_API_KEY is not configured");
   }
 
-  const mailerSend = new MailerSend({ apiToken: apiKey });
+  const mailerSend = new MailerSend({ apiKey });
 
   const answersHtml = answers && Object.keys(answers).length > 0
     ? `<h3 style="color:#c084fc;margin-top:20px;">Application Answers</h3>` +
@@ -90,7 +90,7 @@ export async function sendLoginNotificationEmail({
     throw new Error("MAILERSEND_API_KEY is not configured");
   }
 
-  const mailerSend = new MailerSend({ apiToken: apiKey });
+  const mailerSend = new MailerSend({ apiKey });
 
   const now = new Date();
   const timestamp = now.toLocaleString("en-US", {
@@ -155,7 +155,7 @@ export async function sendPasswordResetEmail({
     throw new Error("MAILERSEND_API_KEY is not configured");
   }
 
-  const mailerSend = new MailerSend({ apiToken: apiKey });
+  const mailerSend = new MailerSend({ apiKey });
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
@@ -215,7 +215,7 @@ export async function sendNewConnectionEmail({
     throw new Error("MAILERSEND_API_KEY is not configured");
   }
 
-  const mailerSend = new MailerSend({ apiToken: apiKey });
+  const mailerSend = new MailerSend({ apiKey });
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
