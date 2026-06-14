@@ -1326,7 +1326,7 @@ export default function ProfilePage() {
                     className="mt-[3vw] w-full py-[2.5vw] bg-[#c084fc] text-white rounded-[2.5vw] text-[3.5vw] font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
                     data-testid="button-save-profession-section"
                   >
-                    {updateSectionMutation.isPending ? "Saving..." : "Save Profession"}
+                    {updateSectionMutation.isPending ? "Saving..." : "Save"}
                   </button>
                 </div>
 
@@ -1364,7 +1364,7 @@ export default function ProfilePage() {
                     className="mt-[3vw] w-full py-[2.5vw] bg-[#c084fc] text-white rounded-[2.5vw] text-[3.5vw] font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
                     data-testid="button-save-genre-section"
                   >
-                    {updateSectionMutation.isPending ? "Saving..." : "Save Genre"}
+                    {updateSectionMutation.isPending ? "Saving..." : "Save"}
                   </button>
                 </div>
 
@@ -1757,7 +1757,7 @@ export default function ProfilePage() {
                       className="px-4 py-2 bg-[#c084fc] text-white rounded-lg text-sm font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
                       data-testid="button-save-profession-section-desktop"
                     >
-                      {updateSectionMutation.isPending ? "Saving..." : "Save Profession"}
+                      {updateSectionMutation.isPending ? "Saving..." : "Save"}
                     </button>
                   </div>
                 </div>
@@ -1793,7 +1793,7 @@ export default function ProfilePage() {
                       className="px-4 py-2 bg-[#c084fc] text-white rounded-lg text-sm font-semibold hover:bg-[#c084fc]/90 transition-colors disabled:opacity-60"
                       data-testid="button-save-genre-section-desktop"
                     >
-                      {updateSectionMutation.isPending ? "Saving..." : "Save Genre"}
+                      {updateSectionMutation.isPending ? "Saving..." : "Save"}
                     </button>
                   </div>
                 </div>
