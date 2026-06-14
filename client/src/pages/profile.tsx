@@ -43,7 +43,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { compressImage } from "@/lib/compressImage";
-import type { User } from "@shared/schema";
+import type { User, Post } from "@shared/schema";
 import { getGenreBadge, getProfessionBadge } from "@/lib/badges";
 import goldBadge from "@assets/Gold_Level-removebg-preview_1762468528106.png";
 import platinumBadge from "@assets/Platinum Level_1762468203581.png";
@@ -106,13 +106,28 @@ export default function ProfilePage() {
   const [editGenres, setEditGenres] = useState<string[]>([]);
   const [editProfileImage, setEditProfileImage] = useState<string | null>(null);
   
-  // Posts state
-  const [posts, setPosts] = useState<{id: number; content: string; image: string | null; timestamp: Date}[]>([
-    { id: 1, content: "Just finished a new track! Can't wait to share it with everyone. The vibe is incredible 🎵", image: null, timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000) },
-    { id: 2, content: "Studio session was fire today. Grateful for the amazing collaborators I get to work with!", image: null, timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000) }
-  ]);
+  // Posts from API
+  const { data: allPosts = [] } = useQuery<(Post & { author: User })[]>({
+    queryKey: ["/api/posts"],
+  });
   const [newPostContent, setNewPostContent] = useState("");
   const [newPostImage, setNewPostImage] = useState<string | null>(null);
+
+  const createPostMutation = useMutation({
+    mutationFn: async (data: { userId: number; content: string; type: string }) => {
+      const res = await apiRequest("POST", "/api/posts", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      setNewPostContent("");
+      setNewPostImage(null);
+      toast({ title: "Posted to Core!", description: "Your post is now live in Open MiC." });
+    },
+    onError: () => {
+      toast({ title: "Failed to post", description: "Please try again later.", variant: "destructive" });
+    },
+  });
 
   const allProfessions = [
     "Artist", "Administration", "Audio", "Consultant", "Dancer", "DJ", "Educator", "Fashion", 
@@ -446,33 +461,15 @@ export default function ProfilePage() {
     }
   };
 
-  const handleCreatePost = async () => {
+  const handleCreatePost = () => {
     if (!newPostContent.trim() && !newPostImage) return;
-    
-    // Check if user is Platinum member - post to Core page
     if (currentUser?.memberLevel === "Gold" || currentUser?.memberLevel === "Platinum") {
-      try {
-        await apiRequest("POST", "/api/posts", { 
-          userId: currentUser.id,
-          content: newPostContent.trim() + (newPostImage ? `\n[Image attached]` : ""),
-          type: "post"
-        });
-        queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
-        setNewPostContent("");
-        setNewPostImage(null);
-        toast({ 
-          title: "Posted to Core!", 
-          description: "Your post has been shared with the community." 
-        });
-      } catch (error) {
-        toast({ 
-          title: "Failed to post", 
-          description: "Please try again later.",
-          variant: "destructive" 
-        });
-      }
+      createPostMutation.mutate({
+        userId: currentUser.id,
+        content: newPostContent.trim() + (newPostImage ? `\n[Image attached]` : ""),
+        type: "post",
+      });
     } else {
-      // Free users cannot post — show upgrade modal
       openUpgradeModal();
     }
   };
@@ -989,35 +986,37 @@ export default function ProfilePage() {
                 </div>
                 
                 {/* Posts List */}
-                <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                  {posts.length === 0 ? (
-                    <p className="text-center text-gray-500 text-sm py-4">No posts yet. Share something!</p>
-                  ) : (
-                    posts.map((post) => (
-                      <div key={post.id} className="p-3 bg-white rounded-xl border border-[#c084fc]/20 hover:border-[#c084fc]/40 transition-all">
-                        <div className="flex items-start gap-2">
-                          <div className="w-8 h-8 bg-gradient-to-br from-[#c084fc] to-[#a855f7] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 overflow-hidden">
-                            {isImageAvatar(currentUser?.avatar) ? (
-                              <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              currentUser?.avatar || "?"
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-gray-800 text-sm">{currentUser?.pkaName || `${currentUser?.firstName} ${currentUser?.lastName}`}</span>
-                              <span className="text-xs text-gray-500">{formatTimeAgo(post.timestamp)}</span>
+                {(() => {
+                  const userPosts = allPosts.filter(p => p.userId === currentUser?.id && (p.type === "post" || p.type === "community"));
+                  return (
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                      {userPosts.length === 0 ? (
+                        <p className="text-center text-gray-500 text-sm py-4">No posts yet. Share something!</p>
+                      ) : (
+                        userPosts.map((post) => (
+                          <div key={post.id} className="p-3 bg-white rounded-xl border border-[#c084fc]/20 hover:border-[#c084fc]/40 transition-all">
+                            <div className="flex items-start gap-2">
+                              <div className="w-8 h-8 bg-gradient-to-br from-[#c084fc] to-[#a855f7] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 overflow-hidden">
+                                {isImageAvatar(currentUser?.avatar) ? (
+                                  <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  currentUser?.avatar || "?"
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-gray-800 text-sm">{currentUser?.pkaName || `${currentUser?.firstName} ${currentUser?.lastName}`}</span>
+                                  <span className="text-xs text-gray-500">{formatTimeAgo(new Date(post.createdAt))}</span>
+                                </div>
+                                <p className="text-gray-700 text-sm mt-1">{post.content}</p>
+                              </div>
                             </div>
-                            <p className="text-gray-700 text-sm mt-1">{post.content}</p>
-                            {post.image && (
-                              <img src={post.image} alt="Post" className="mt-2 rounded-lg max-h-40 object-cover" />
-                            )}
                           </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                        ))
+                      )}
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
 
