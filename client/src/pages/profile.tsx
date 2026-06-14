@@ -287,18 +287,24 @@ export default function ProfilePage() {
     { label: "Events", value: currentUser.eventsAttended, icon: Trophy },
   ];
 
+  const ensureUrl = (url: string | null | undefined) => {
+    if (!url) return undefined;
+    return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+  };
+
   const socialLinks = [
-    { platform: "Instagram", url: currentUser.socialInstagram, icon: Instagram },
-    { platform: "Twitter", url: currentUser.socialTwitter, icon: Twitter },
-    { platform: "Website", url: currentUser.website, icon: Globe },
+    { platform: "Instagram", url: ensureUrl(currentUser.socialInstagram), icon: Instagram },
+    { platform: "Twitter", url: ensureUrl(currentUser.socialTwitter), icon: Twitter },
+    { platform: "Website", url: ensureUrl(currentUser.website), icon: Globe },
   ].filter(link => link.url);
 
   const musicLinks = [
-    { platform: "Spotify", url: currentUser.musicSpotify },
-    { platform: "SoundCloud", url: currentUser.musicSoundcloud },
-    { platform: "Apple Music", url: currentUser.musicAppleMusic },
-    { platform: "Bandcamp", url: currentUser.musicBandcamp },
+    { platform: "Spotify", url: ensureUrl(currentUser.musicSpotify) },
+    { platform: "SoundCloud", url: ensureUrl(currentUser.musicSoundcloud) },
+    { platform: "Apple Music", url: ensureUrl(currentUser.musicAppleMusic) },
+    { platform: "Bandcamp", url: ensureUrl(currentUser.musicBandcamp) },
   ].filter(link => link.url);
+
 
 
   const handleSave = () => {
