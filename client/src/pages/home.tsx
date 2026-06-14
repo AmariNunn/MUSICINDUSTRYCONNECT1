@@ -14,6 +14,8 @@ export default function HomePage() {
   
   const { data: posts = [], isLoading: postsLoading } = useQuery<(Post & { author: User })[]>({
     queryKey: ["/api/posts"],
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const { data: users = [] } = useQuery<User[]>({
