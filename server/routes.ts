@@ -533,7 +533,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/posts", async (req, res) => {
     try {
       const validatedData = insertPostSchema.parse(req.body);
-      const post = await storage.createPost(validatedData);
+      const post = await storage.createPost({
+        ...validatedData,
+        image: typeof req.body.image === "string" ? req.body.image : "",
+      });
       res.status(201).json(post);
     } catch (error: any) {
       res.status(400).json({ message: "Invalid post data", error: error.message });
