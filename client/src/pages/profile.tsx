@@ -86,11 +86,15 @@ export default function ProfilePage() {
     queryKey: ["/api/users"],
   });
 
-  // Fetch user by slug if viewing another profile
+  // Fetch user by slug or numeric ID if viewing another profile
+  const isNumericId = !!userSlug && /^\d+$/.test(userSlug);
   const { data: slugUser } = useQuery<User>({
-    queryKey: ["/api/users/slug", userSlug],
+    queryKey: isNumericId ? ["/api/users", userSlug] : ["/api/users/slug", userSlug],
     queryFn: async () => {
-      const response = await fetch(`/api/users/slug/${userSlug}`);
+      const url = isNumericId
+        ? `/api/users/${userSlug}`
+        : `/api/users/slug/${userSlug}`;
+      const response = await fetch(url);
       if (!response.ok) throw new Error("User not found");
       return response.json();
     },

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -484,20 +485,24 @@ export default function CorePage() {
                       <Card key={post.id} className="bg-white border-[#c084fc]/20 rounded-2xl hover:shadow-lg transition-all">
                         <CardContent className="p-6">
                           <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-[#c084fc] rounded-full flex items-center justify-center text-white font-bold shrink-0 overflow-hidden">
-                              {(post.author.avatar?.startsWith('data:') || post.author.avatar?.startsWith('/api/avatar/')) ? (
-                                <img src={post.author.avatar} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                post.author.avatar
-                              )}
-                            </div>
+                            <Link href={`/profile/${post.author.id}`}>
+                              <div className="w-12 h-12 bg-[#c084fc] rounded-full flex items-center justify-center text-white font-bold shrink-0 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
+                                {(post.author.avatar?.startsWith('data:') || post.author.avatar?.startsWith('/api/avatar/')) ? (
+                                  <img src={post.author.avatar} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  post.author.avatar
+                                )}
+                              </div>
+                            </Link>
                             <div className="flex-1 min-w-0">
                               <div className="flex flex-wrap items-center gap-2 mb-2">
-                                <h4 className="font-bold text-gray-900">
-                                  {post.author.usePkaAsMain && post.author.pkaName
-                                    ? post.author.pkaName
-                                    : `${post.author.firstName} ${post.author.lastName}`}
-                                </h4>
+                                <Link href={`/profile/${post.author.id}`}>
+                                  <h4 className="font-bold text-gray-900 cursor-pointer hover:text-[#c084fc] transition-colors">
+                                    {post.author.usePkaAsMain && post.author.pkaName
+                                      ? post.author.pkaName
+                                      : `${post.author.firstName} ${post.author.lastName}`}
+                                  </h4>
+                                </Link>
                                 {post.author.verified && (
                                   <div className="bg-blue-500 rounded-full p-0.5">
                                     <Star className="w-3 h-3 text-white fill-current" />
