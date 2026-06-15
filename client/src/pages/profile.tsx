@@ -720,7 +720,7 @@ export default function ProfilePage() {
         <div className="grid grid-cols-2 gap-3 md:gap-6 lg:gap-8 px-4 md:px-6 lg:px-0 items-start">
           {/* Left Column - Bio & Stats */}
           <div className="flex flex-col gap-3 md:gap-4">
-            <div className="grid grid-cols-2 gap-3 items-start">
+            <div className="flex flex-col gap-3">
             {/* Music Portfolio */}
             <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm hover:shadow-3xl transition-all duration-500 transform hover:-translate-y-1 hover:scale-[1.02] group">
               <CardHeader className="bg-gradient-to-r from-[#c084fc] via-[#c084fc] to-[#c084fc] text-white rounded-t-lg relative overflow-hidden p-4 md:p-6">
